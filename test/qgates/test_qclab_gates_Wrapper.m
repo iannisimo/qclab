@@ -1,7 +1,7 @@
-classdef TestGateWrappers < matlab.unittest.TestCase
+classdef test_qclab_gates_Wrapper < matlab.unittest.TestCase
   methods (Test)
 
-    function testHadamard(testCase)
+    function test_Hadamard(testCase)
       circuit = qclab.QCircuit(1);
       circuit.H(0);
       gate = circuit.objects(1);
@@ -9,7 +9,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testCNOT(testCase)
+    function test_CNOT(testCase)
       circuit = qclab.QCircuit(2);
       circuit.CNOT(0, 1);
       gate = circuit.objects(1);
@@ -17,7 +17,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testCPhase(testCase)
+    function test_CPhase(testCase)
       theta = pi;
       circuit = qclab.QCircuit(2);
       circuit.CPhase(0, 1, theta);
@@ -27,7 +27,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testCRX(testCase)
+    function test_CRX(testCase)
       theta = pi/2;
       circuit = qclab.QCircuit(2);
       circuit.CRX(0, 1, theta);
@@ -37,7 +37,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testCRY(testCase)
+    function test_CRY(testCase)
       theta = pi/3;
       circuit = qclab.QCircuit(2);
       circuit.CRY(0, 1, theta);
@@ -47,7 +47,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testCRZ(testCase)
+    function test_CRZ(testCase)
       theta = pi/4;
       circuit = qclab.QCircuit(2);
       circuit.CRZ(0, 1, theta);
@@ -57,7 +57,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testCU2(testCase)
+    function test_CU2(testCase)
       phi = pi/5; lambda = pi/6;
       circuit = qclab.QCircuit(2);
       circuit.CU2(0, 1, 1, phi, lambda);
@@ -68,7 +68,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.lambda, lambda, 'AbsTol', 1e-14);
     end
 
-    function testCU3(testCase)
+    function test_CU3(testCase)
       theta = 1; phi = pi/5; lambda = pi/6;
       circuit = qclab.QCircuit(2);
       circuit.CU3(0, 1,1, theta, phi, lambda);
@@ -80,7 +80,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.lambda, lambda, 'AbsTol', 1e-14);
     end
 
-    function testCY(testCase)
+    function test_CY(testCase)
       circuit = qclab.QCircuit(2);
       circuit.CY(0, 1);
       gate = circuit.objects(1);
@@ -88,7 +88,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testCZ(testCase)
+    function test_CZ(testCase)
       circuit = qclab.QCircuit(2);
       circuit.CZ(0, 1);
       gate = circuit.objects(1);
@@ -96,7 +96,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testiSWAP(testCase)
+    function test_iSWAP(testCase)
       circuit = qclab.QCircuit(2);
       circuit.iSWAP(0, 1);
       gate = circuit.objects(1);
@@ -104,7 +104,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testMG(testCase)
+    function test_MG(testCase)
       circuit = qclab.QCircuit(2);
       U = [0 1; 1 0];
       circuit.MG([0], U);
@@ -114,7 +114,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.matrix, U, 'AbsTol', 1e-14);
     end
 
-    function testMCMG(testCase)
+    function test_MCMG(testCase)
       circuit = qclab.QCircuit(3);
       U = eye(2);
       circuit.MCMG([0 1], 2, U);
@@ -123,7 +123,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testMCRX(testCase)
+    function test_MCRX(testCase)
       theta = pi/2;
       circuit = qclab.QCircuit(3);
       circuit.MCRX([0 1], 2, [1 0], theta);
@@ -133,7 +133,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testMCRY(testCase)
+    function test_MCRY(testCase)
       theta = pi/3;
       circuit = qclab.QCircuit(3);
       circuit.MCRY([0 1], 2, [1 1], theta);
@@ -143,7 +143,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testMCRZ(testCase)
+    function test_MCRZ(testCase)
       theta = pi/4;
       circuit = qclab.QCircuit(3);
       circuit.MCRZ([0 1], 2, [0 1], theta);
@@ -153,7 +153,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testMCX(testCase)
+    function test_MCX(testCase)
       circuit = qclab.QCircuit(3);
       circuit.MCX([0 1], 2);
       gate = circuit.objects(1);
@@ -161,7 +161,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testMCY(testCase)
+    function test_MCY(testCase)
       circuit = qclab.QCircuit(3);
       circuit.MCY([0 1], 2);
       gate = circuit.objects(1);
@@ -169,7 +169,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testMCZ(testCase)
+    function test_MCZ(testCase)
       circuit = qclab.QCircuit(3);
       circuit.MCZ([0 1], 2);
       gate = circuit.objects(1);
@@ -177,7 +177,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testPauliX(testCase)
+    function test_PauliX(testCase)
       circuit = qclab.QCircuit(1);
       circuit.X(0);
       gate = circuit.objects(1);
@@ -185,7 +185,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testPauliY(testCase)
+    function test_PauliY(testCase)
       circuit = qclab.QCircuit(1);
       circuit.Y(0);
       gate = circuit.objects(1);
@@ -193,7 +193,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testPauliZ(testCase)
+    function test_PauliZ(testCase)
       circuit = qclab.QCircuit(1);
       circuit.Z(0);
       gate = circuit.objects(1);
@@ -201,7 +201,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testPhase(testCase)
+    function test_Phase(testCase)
       theta = pi/8;
       circuit = qclab.QCircuit(1);
       circuit.Phase(0, theta);
@@ -211,7 +211,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testPhase45(testCase)
+    function test_Phase45(testCase)
       circuit = qclab.QCircuit(1);
       circuit.Phase45(0);
       gate = circuit.objects(1);
@@ -219,7 +219,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testT(testCase)
+    function test_T(testCase)
       circuit = qclab.QCircuit(1);
       circuit.T(0);
       gate = circuit.objects(1);
@@ -227,7 +227,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testPhase90(testCase)
+    function test_Phase90(testCase)
       circuit = qclab.QCircuit(1);
       circuit.Phase90(0);
       gate = circuit.objects(1);
@@ -235,7 +235,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testS(testCase)
+    function test_S(testCase)
       circuit = qclab.QCircuit(1);
       circuit.S(0);
       gate = circuit.objects(1);
@@ -243,7 +243,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testRX(testCase)
+    function test_RX(testCase)
       theta = pi/2;
       circuit = qclab.QCircuit(1);
       circuit.RX(0, theta);
@@ -253,7 +253,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testRXX(testCase)
+    function test_RXX(testCase)
       theta = pi/2;
       circuit = qclab.QCircuit(2);
       circuit.RXX([0 1], theta);
@@ -263,7 +263,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testRY(testCase)
+    function test_RY(testCase)
       theta = pi/3;
       circuit = qclab.QCircuit(1);
       circuit.RY(0, theta);
@@ -273,7 +273,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testRYY(testCase)
+    function test_RYY(testCase)
       theta = pi/3;
       circuit = qclab.QCircuit(2);
       circuit.RYY([0 1], theta);
@@ -283,7 +283,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testRZ(testCase)
+    function test_RZ(testCase)
       theta = pi/4;
       circuit = qclab.QCircuit(1);
       circuit.RZ(0, theta);
@@ -293,7 +293,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testRZZ(testCase)
+    function test_RZZ(testCase)
       theta = pi/4;
       circuit = qclab.QCircuit(2);
       circuit.RZZ([0 1], theta);
@@ -303,7 +303,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.theta, theta, 'AbsTol', 1e-14);
     end
 
-    function testSWAP(testCase)
+    function test_SWAP(testCase)
       circuit = qclab.QCircuit(2);
       circuit.SWAP(0, 1);
       gate = circuit.objects(1);
@@ -311,7 +311,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(gate.equals(expected));
     end
 
-    function testU2(testCase)
+    function test_U2(testCase)
       phi = pi/3; lambda = pi/4;
       circuit = qclab.QCircuit(1);
       circuit.U2(0, phi, lambda);
@@ -322,7 +322,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.lambda, lambda, 'AbsTol', 1e-14);
     end
 
-    function testU3(testCase)
+    function test_U3(testCase)
       theta = pi/5; phi = pi/6; lambda = pi/7;
       circuit = qclab.QCircuit(1);
       circuit.U3(0, theta, phi, lambda);
@@ -334,7 +334,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.lambda, lambda, 'AbsTol', 1e-14);
     end
 
-    function testCNOTWithControlState0(testCase)
+    function test_CNOT_With_ControlState0(testCase)
       circuit = qclab.QCircuit(2);
       circuit.CNOT(0, 1, 0);
       gate = circuit.objects(1);
@@ -343,7 +343,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.controlState, int64(0));
     end
 
-    function testMultipleGatesInCircuit(testCase)
+    function test_Multiple_Gates_In_Circuit(testCase)
       circuit = qclab.QCircuit(2);
       circuit.H(0);
       circuit.CNOT(0, 1);
@@ -353,7 +353,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyTrue(objects(2).equals(qclab.qgates.CNOT(0, 1)));
     end
 
-    function testEmptyMatrixGateLabel(testCase)
+    function test_Empty_MatrixGate_Label(testCase)
       circuit = qclab.QCircuit(1);
       U = [0 1; 1 0];
       circuit.MG(0, U);
@@ -363,7 +363,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.label, ' U ');
     end
 
-    function testCustomLabelMatrixGate(testCase)
+    function test_Custom_Label_MatrixGate(testCase)
       circuit = qclab.QCircuit(1);
       U = [1 0; 0 -1];
       circuit.MG(0, U, 'Z');
@@ -373,7 +373,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.label, ' Z ');
     end
 
-    function testMCMGWithControlStates(testCase)
+    function test_MCMG_With_ControlStates(testCase)
       circuit = qclab.QCircuit(3);
       U = [1 0; 0 -1];
       circuit.MCMG([0 1], 2, U, [1 0]);
@@ -383,7 +383,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.controlStates, int64([1 0]));
     end
 
-    function testRXDefaultQubit(testCase)
+    function test_RX_Default_Qubit(testCase)
       circuit = qclab.QCircuit(1);
       circuit.RX();
       gate = circuit.objects(1);
@@ -392,7 +392,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.qubits, int64(0));
     end
 
-    function testRYWithQAngle(testCase)
+    function test_RY_With_QAngle(testCase)
       circuit = qclab.QCircuit(1);
       angle = qclab.QAngle(pi/2);
       circuit.RY(0, angle);
@@ -403,7 +403,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
     end
 
 
-    function testU2WithDefaultArgs(testCase)
+    function test_U2_With_Default_Args(testCase)
       circuit = qclab.QCircuit(1);
       circuit.U2();
       gate = circuit.objects(1);
@@ -412,7 +412,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.qubits, int64(0));
     end
 
-    function testMCZWithControlState0(testCase)
+    function test_MCZ_With_ControlState0(testCase)
       circuit = qclab.QCircuit(3);
       circuit.MCZ([0 1], 2, [0 1]);
       gate = circuit.objects(1);
@@ -421,7 +421,7 @@ classdef TestGateWrappers < matlab.unittest.TestCase
       testCase.verifyEqual(gate.controlStates, int64([0 1]));
     end
 
-    function testPhaseWithAngleObject(testCase)
+    function test_Phase_With_Angle_Object(testCase)
       circuit = qclab.QCircuit(1);
       theta = qclab.QAngle(pi/8);
       circuit.Phase(0, theta);
