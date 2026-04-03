@@ -74,17 +74,23 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
     label_ char = ''
     %> Number of measurement in the circuit.
     nbMeasurements_(1,1) int64
+    %> Dimensionality of Hilbert space
+    d_ double = 2
   end
 
   methods
     %> @brief Constructs a quantum circuit with `nbQubits` qubits starting at
-    %> qubit `offset`. The default value for `offset` is 0.
-    function obj = QCircuit( nbQubits, offset )
-      if nargin == 1, offset = 0; end
+    %> qubit `offset` with Hilbert space dimension `d`. The default value for `offset` is 0.
+    %> default `d` value is 2 (qubit)
+    function obj = QCircuit( nbQubits, offset, d )
+      if nargin == 1, offset = 0, d = 2; end
+      if nargin == 2, d = 2; end
       assert(qclab.isNonNegInteger(nbQubits-1)) ;
       assert(qclab.isNonNegInteger(offset)) ;
+      assert(qclab.isNonNegInteger(d-2))
       obj.nbQubits_ = nbQubits ;
       obj.offset_ = offset ;
+      obj.d_ = d ;
     end
 
     % nbQubits
@@ -155,9 +161,9 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       %   mat - Unitary matrix representing the quantum circuit (double).
       assert(obj.nbMeasurements == 0)
       issparse = qclab.isSparse(obj.nbQubits_);
-      mat = qclab.qId(obj.nbQubits, issparse);
+      mat = qclab.qId(obj.nbQubits, issparse, obj.d_);
       for i = 1:length(obj.objects_)
-        mat = apply(obj.objects_(i), 'R', 'N', obj.nbQubits, mat) ;
+        mat = apply(obj.objects_(i), 'R', 'N', obj.nbQubits, mat, 0, obj.d_) ;
       end
     end
 
@@ -182,15 +188,16 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       if nargin == 2
         seed = 1;
       end
+      d = obj.d_;
       if isa(v, 'char')
-        i = bin2dec(v);
-        v = zeros( 2^strlength(v),1 );
+        i = base2dec(v, double(d));
+        v = zeros( d^strlength(v),1 );
         v(i+1) = 1;
       end
       nbQubits = obj.nbQubits_;
-      assert(size(v,1) == 2^nbQubits);
+      assert(size(v,1) == d^nbQubits);
       for i = 1:length(obj.objects_)
-        v = apply(obj.objects_(i), 'R', 'N', nbQubits, v);
+        v = apply(obj.objects_(i), 'R', 'N', nbQubits, v, 0, d);
       end
       % no measurements
       if isa(v,"double")
@@ -202,14 +209,14 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
         meas = [];
         measMid = [];
         measEnd = [];
-      
-      simulation = qclab.QSimulate(v.states, v.res, v.prob, ...
-        {meas, measMid, measEnd}, seed);
-      % with measurements
+
+        simulation = qclab.QSimulate(v.states, v.res, v.prob, ...
+          {meas, measMid, measEnd}, seed);
+        % with measurements
       else
         [meas, measMid, measEnd] = obj.measurements;
         simulation = qclab.QSimulate(v.states, v.res, v.prob, ...
-        {meas, measMid, measEnd}, seed);
+          {meas, measMid, measEnd}, seed);
       end
     end
 
@@ -225,7 +232,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
     %> @param current current state to which QCircuit is applied
     %> @param offset offset applied to qubit
     % ==========================================================================
-    function [current] = apply(obj, side, op, nbQubits, current, offset )
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d )
       % apply - Apply the quantum circuit to an input vector or state.
       %
       % Syntax:
@@ -244,29 +251,30 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       % Outputs:
       %   current - Updated state after applying the circuit (struct or double).
       assert( nbQubits >= obj.nbQubits );
-      if nargin == 5, offset = 0; end
+      if nargin < 6, offset = 0; end
+      if nargin < 7, d = 2; end
       if strcmp(op, 'N')
         if strcmp(side,'L') % Left + NoTrans
           for i = length(obj.objects_):-1:1
             current = apply(obj.objects_(i), side, op, nbQubits, current, ...
-              obj.qubit + offset );
+              obj.qubit + offset, d );
           end
         else % Right + NoTrans
           for i = 1:length(obj.objects_)
             current = apply(obj.objects_(i), side, op, nbQubits, current, ...
-              obj.qubit + offset );
+              obj.qubit + offset, d );
           end
         end
       else
         if strcmp(side,'L') % Left + [Conj]Trans
           for i = 1:length(obj.objects_)
             current = apply(obj.objects_(i), side, op, nbQubits, current, ...
-              obj.qubit + offset );
+              obj.qubit + offset, d );
           end
         else % Right + [Conj]Trans
           for i = length(obj.objects_):-1:1
             current = apply(obj.objects_(i), side, op, nbQubits, current, ...
-              obj.qubit + offset );
+              obj.qubit + offset, d );
           end
         end
       end
@@ -727,6 +735,10 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       %   bool - True if the objects can be inserted, false otherwise.
       bool = true;
       for i = 1: length(objects)
+        % if ismethod(objects(i), "matrix") && ~ismethod(objects(i), "dmatrix")
+        %   bool = false;
+        %   return
+        % end
         qubits = objects(i).qubits;
         if max(qubits) >= obj.nbQubits_
           bool = false;
@@ -1041,412 +1053,412 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
         out = circuitCell ;
       end
     end
-            % ==========================================================================
-        %> ALIASES
-        % ==========================================================================
-        function H(obj,qubit)
-            obj.push_back(qclab.qgates.Hadamard(qubit))
-        end
-        function CNOT(obj, control, target, controlState)
-            if nargin < 2
-                control = 0;
-            end
-            if nargin < 3
-                target = 1;
-            end
-            if nargin < 4
-                controlState = 1;
-            end
+    % ==========================================================================
+    %> ALIASES
+    % ==========================================================================
+    function H(obj,qubit)
+      obj.push_back(qclab.qgates.Hadamard(qubit))
+    end
+    function CNOT(obj, control, target, controlState)
+      if nargin < 2
+        control = 0;
+      end
+      if nargin < 3
+        target = 1;
+      end
+      if nargin < 4
+        controlState = 1;
+      end
 
-            obj.push_back(qclab.qgates.CNOT(control, target, controlState));
-        end
+      obj.push_back(qclab.qgates.CNOT(control, target, controlState));
+    end
 
-        function CPhase(obj, control, target, varargin)
-            if nargin == 1
-                control = 0;
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 2
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 3
-                controlState = 1;
-                args = varargin;
-            else
-                if nargin == 4 || (nargin == 5 && ~isa(varargin{1},'qclab.QAngle') && ...
-                        abs(1 - abs(varargin{1})^2 - abs(varargin{2})^2) < 10*eps)
-                    controlState = 1;
-                    args = varargin;
-                else
-                    controlState = varargin{end};
-                    args = varargin(1:end-1);
-                end
-            end
-            obj.push_back(qclab.qgates.CPhase(control, target, args{:}, controlState));
+    function CPhase(obj, control, target, varargin)
+      if nargin == 1
+        control = 0;
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 2
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 3
+        controlState = 1;
+        args = varargin;
+      else
+        if nargin == 4 || (nargin == 5 && ~isa(varargin{1},'qclab.QAngle') && ...
+            abs(1 - abs(varargin{1})^2 - abs(varargin{2})^2) < 10*eps)
+          controlState = 1;
+          args = varargin;
+        else
+          controlState = varargin{end};
+          args = varargin(1:end-1);
         end
+      end
+      obj.push_back(qclab.qgates.CPhase(control, target, args{:}, controlState));
+    end
 
-        function CRX(obj, control, target, varargin)
-            if nargin == 1
-                control = 0;
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 2
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 3
-                controlState = 1;
-                args = varargin;
-            else
-                if nargin == 4 || (nargin == 5 && ~isa(varargin{1},'qclab.QAngle') && ...
-                        abs(1 - abs(varargin{1})^2 - abs(varargin{2})^2) < 10*eps)
-                    controlState = 1;
-                    args = varargin;
-                else
-                    controlState = varargin{end};
-                    args = varargin(1:end-1);
-                end
-            end
-            obj.push_back(qclab.qgates.CRotationX(control, target, args{:}, controlState));
+    function CRX(obj, control, target, varargin)
+      if nargin == 1
+        control = 0;
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 2
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 3
+        controlState = 1;
+        args = varargin;
+      else
+        if nargin == 4 || (nargin == 5 && ~isa(varargin{1},'qclab.QAngle') && ...
+            abs(1 - abs(varargin{1})^2 - abs(varargin{2})^2) < 10*eps)
+          controlState = 1;
+          args = varargin;
+        else
+          controlState = varargin{end};
+          args = varargin(1:end-1);
         end
+      end
+      obj.push_back(qclab.qgates.CRotationX(control, target, args{:}, controlState));
+    end
 
-        function CRY(obj, control, target, varargin)
-            if nargin == 1
-                control = 0;
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 2
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 3
-                controlState = 1;
-                args = varargin;
-            else
-                if nargin == 4 || (nargin == 5 && ~isa(varargin{1},'qclab.QAngle') && ...
-                        abs(1 - abs(varargin{1})^2 - abs(varargin{2})^2) < 10*eps)
-                    controlState = 1;
-                    args = varargin;
-                else
-                    controlState = varargin{end};
-                    args = varargin(1:end-1);
-                end
-            end
-            obj.push_back(qclab.qgates.CRotationY(control, target, args{:}, controlState));
+    function CRY(obj, control, target, varargin)
+      if nargin == 1
+        control = 0;
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 2
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 3
+        controlState = 1;
+        args = varargin;
+      else
+        if nargin == 4 || (nargin == 5 && ~isa(varargin{1},'qclab.QAngle') && ...
+            abs(1 - abs(varargin{1})^2 - abs(varargin{2})^2) < 10*eps)
+          controlState = 1;
+          args = varargin;
+        else
+          controlState = varargin{end};
+          args = varargin(1:end-1);
         end
+      end
+      obj.push_back(qclab.qgates.CRotationY(control, target, args{:}, controlState));
+    end
 
-        function CRZ(obj, control, target, varargin)
-            if nargin == 1
-                control = 0;
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 2
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 3
-                controlState = 1;
-                args = varargin;
-            else
-                if nargin == 4 || (nargin == 5 && ~isa(varargin{1},'qclab.QAngle') && ...
-                        abs(1 - abs(varargin{1})^2 - abs(varargin{2})^2) < 10*eps)
-                    controlState = 1;
-                    args = varargin;
-                else
-                    controlState = varargin{end};
-                    args = varargin(1:end-1);
-                end
-            end
-            obj.push_back(qclab.qgates.CRotationZ(control, target, args{:}, controlState));
+    function CRZ(obj, control, target, varargin)
+      if nargin == 1
+        control = 0;
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 2
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 3
+        controlState = 1;
+        args = varargin;
+      else
+        if nargin == 4 || (nargin == 5 && ~isa(varargin{1},'qclab.QAngle') && ...
+            abs(1 - abs(varargin{1})^2 - abs(varargin{2})^2) < 10*eps)
+          controlState = 1;
+          args = varargin;
+        else
+          controlState = varargin{end};
+          args = varargin(1:end-1);
         end
+      end
+      obj.push_back(qclab.qgates.CRotationZ(control, target, args{:}, controlState));
+    end
 
-        function CU2(obj, control, target, controlState, varargin)
-            if nargin == 1
-                control = 0;
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 2
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 3
-                controlState = 1;
-                args = {};
-            elseif nargin == 4
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.CU2(control, target, controlState, args{:}));
-        end
+    function CU2(obj, control, target, controlState, varargin)
+      if nargin == 1
+        control = 0;
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 2
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 3
+        controlState = 1;
+        args = {};
+      elseif nargin == 4
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.CU2(control, target, controlState, args{:}));
+    end
 
-        function CU3(obj, control, target, controlState, varargin)
-            if nargin == 1
-                control = 0;
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 2
-                target = 1;
-                controlState = 1;
-                args = {};
-            elseif nargin == 3
-                controlState = 1;
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.CU3(control, target, controlState, args{:}));
-        end
+    function CU3(obj, control, target, controlState, varargin)
+      if nargin == 1
+        control = 0;
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 2
+        target = 1;
+        controlState = 1;
+        args = {};
+      elseif nargin == 3
+        controlState = 1;
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.CU3(control, target, controlState, args{:}));
+    end
 
-        function CY(obj, control, target, controlState)
-            if nargin < 3
-                control = 0;
-                target = 1;
-                controlState = 1;
-            elseif nargin < 4
-                controlState = 1;
-            end
-            obj.push_back(qclab.qgates.CY(control, target, controlState));
-        end
+    function CY(obj, control, target, controlState)
+      if nargin < 3
+        control = 0;
+        target = 1;
+        controlState = 1;
+      elseif nargin < 4
+        controlState = 1;
+      end
+      obj.push_back(qclab.qgates.CY(control, target, controlState));
+    end
 
-        function CZ(obj, control, target, controlState)
-            if nargin < 3
-                control = 0;
-                target = 1;
-                controlState = 1;
-            elseif nargin < 4
-                controlState = 1;
-            end
-            obj.push_back(qclab.qgates.CZ(control, target, controlState));
-        end
-
-
-        function iSWAP(obj, qubit0, qubit1)
-            if nargin < 2
-                qubits = [0, 1];
-            elseif nargin < 3
-                qubits = qubit0;
-            else
-                qubits = [qubit0, qubit1];
-            end
-            obj.push_back(qclab.qgates.iSWAP(qubits(1), qubits(2)));
-        end
+    function CZ(obj, control, target, controlState)
+      if nargin < 3
+        control = 0;
+        target = 1;
+        controlState = 1;
+      elseif nargin < 4
+        controlState = 1;
+      end
+      obj.push_back(qclab.qgates.CZ(control, target, controlState));
+    end
 
 
-        function MG(obj, qubits, unitary, label)
-            if nargin < 4
-                label = 'U';
-            end
-            obj.push_back(qclab.qgates.MatrixGate(qubits, unitary, label));
-        end
-
-        function MCMG(obj, controls, targets, unitary, varargin)
-            label = 'U';
-            controlStates = ones(size(controls));
-            for k = 1:length(varargin)
-                arg = varargin{k};
-                if isnumeric(arg) && all(ismember(arg, [0 1])) && length(arg) == length(controls)
-                    controlStates = arg;
-                elseif ischar(arg) || isstring(arg)
-                    label = char(arg);
-                end
-            end
-            obj.push_back(qclab.qgates.MCMatrixGate(controls, targets, unitary, controlStates, label));
-        end
-        function MCRX(obj, controls, target, controlStates, varargin)
-            if nargin < 4
-                controlStates = ones(size(controls));
-            end
-            obj.push_back(qclab.qgates.MCRotationX(controls, target, controlStates, varargin{:}));
-        end
-
-        function MCRY(obj, controls, target, controlStates, varargin)
-            if nargin < 4
-                controlStates = ones(size(controls));
-            end
-            obj.push_back(qclab.qgates.MCRotationY(controls, target, controlStates, varargin{:}));
-        end
-
-        function MCRZ(obj, controls, target, controlStates, varargin)
-            if nargin < 4
-                controlStates = ones(size(controls));
-            end
-            obj.push_back(qclab.qgates.MCRotationZ(controls, target, controlStates, varargin{:}));
-        end
-
-        function MCX(obj, controls, target, controlStates)
-            if nargin < 4
-                controlStates = ones(size(controls));
-            end
-            obj.push_back(qclab.qgates.MCX(controls, target, controlStates));
-        end
-
-        function MCY(obj, controls, target, controlStates)
-            if nargin < 4
-                controlStates = ones(size(controls));
-            end
-            obj.push_back(qclab.qgates.MCY(controls, target, controlStates));
-        end
-
-        function MCZ(obj, controls, target, controlStates)
-            if nargin < 4
-                controlStates = ones(size(controls));
-            end
-            obj.push_back(qclab.qgates.MCZ(controls, target, controlStates));
-        end
-
-        function X(obj, qubit)
-            if nargin < 2
-                qubit = 0;
-            end
-            obj.push_back(qclab.qgates.PauliX(qubit));
-        end
-
-        function  Y(obj, qubit)
-            if nargin < 2
-                qubit = 0;
-            end
-            obj.push_back(qclab.qgates.PauliY(qubit));
-        end
-
-        function Z(obj, qubit)
-            if nargin < 2
-                qubit = 0;
-            end
-            obj.push_back(qclab.qgates.PauliZ(qubit));
-        end
-
-        function Phase(obj, qubit, varargin)
-            if nargin < 2
-                qubit = 0;
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.Phase(qubit, args{:}));
-        end
-
-        function Phase45(obj, qubit)
-            if nargin < 2
-                qubit = 0;
-            end
-            obj.push_back(qclab.qgates.Phase45(qubit));
-        end
-
-        function T(obj, qubit)
-            if nargin < 2
-                qubit = 0;
-            end
-            obj.push_back(qclab.qgates.Phase45(qubit));
-        end
-        function Phase90(obj, qubit)
-            if nargin < 2
-                qubit = 0;
-            end
-            obj.push_back(qclab.qgates.Phase90(qubit));
-        end
-        function S(obj, qubit)
-            if nargin < 2
-                qubit = 0;
-            end
-            obj.push_back(qclab.qgates.Phase90(qubit));
-        end
+    function iSWAP(obj, qubit0, qubit1)
+      if nargin < 2
+        qubits = [0, 1];
+      elseif nargin < 3
+        qubits = qubit0;
+      else
+        qubits = [qubit0, qubit1];
+      end
+      obj.push_back(qclab.qgates.iSWAP(qubits(1), qubits(2)));
+    end
 
 
-        function RX(obj, qubit, varargin)
-            if nargin < 2
-                qubit = 0;
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.RotationX(qubit, args{:}));
-        end
+    function MG(obj, qubits, unitary, label)
+      if nargin < 4
+        label = 'U';
+      end
+      obj.push_back(qclab.qgates.MatrixGate(qubits, unitary, label));
+    end
 
-        function RXX(obj, qubits, varargin)
-            if nargin < 2
-                qubits = [0, 1];
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.RotationXX(qubits, args{:}));
+    function MCMG(obj, controls, targets, unitary, varargin)
+      label = 'U';
+      controlStates = ones(size(controls));
+      for k = 1:length(varargin)
+        arg = varargin{k};
+        if isnumeric(arg) && all(ismember(arg, [0 1])) && length(arg) == length(controls)
+          controlStates = arg;
+        elseif ischar(arg) || isstring(arg)
+          label = char(arg);
         end
+      end
+      obj.push_back(qclab.qgates.MCMatrixGate(controls, targets, unitary, controlStates, label));
+    end
+    function MCRX(obj, controls, target, controlStates, varargin)
+      if nargin < 4
+        controlStates = ones(size(controls));
+      end
+      obj.push_back(qclab.qgates.MCRotationX(controls, target, controlStates, varargin{:}));
+    end
 
-        function RY(obj, qubit, varargin)
-            if nargin < 2
-                qubit = 0;
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.RotationY(qubit, args{:}));
-        end
+    function MCRY(obj, controls, target, controlStates, varargin)
+      if nargin < 4
+        controlStates = ones(size(controls));
+      end
+      obj.push_back(qclab.qgates.MCRotationY(controls, target, controlStates, varargin{:}));
+    end
 
-        function RYY(obj, qubits, varargin)
-            if nargin < 2
-                qubits = [0, 1];
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.RotationYY(qubits, args{:}));
-        end
+    function MCRZ(obj, controls, target, controlStates, varargin)
+      if nargin < 4
+        controlStates = ones(size(controls));
+      end
+      obj.push_back(qclab.qgates.MCRotationZ(controls, target, controlStates, varargin{:}));
+    end
 
-        function RZ(obj, qubit, varargin)
-            if nargin < 2
-                qubit = 0;
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.RotationZ(qubit, args{:}));
-        end
+    function MCX(obj, controls, target, controlStates)
+      if nargin < 4
+        controlStates = ones(size(controls));
+      end
+      obj.push_back(qclab.qgates.MCX(controls, target, controlStates));
+    end
 
-        function RZZ(obj, qubits, varargin)
-            if nargin < 2
-                qubits = [0, 1];
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.RotationZZ(qubits, args{:}));
-        end
+    function MCY(obj, controls, target, controlStates)
+      if nargin < 4
+        controlStates = ones(size(controls));
+      end
+      obj.push_back(qclab.qgates.MCY(controls, target, controlStates));
+    end
 
-        function SWAP(obj, qubit1, qubit2)
-            if nargin < 3
-                qubit1 = 0;
-                qubit2 = 1;
-            end
-            obj.push_back(qclab.qgates.SWAP(qubit1, qubit2));
-        end
+    function MCZ(obj, controls, target, controlStates)
+      if nargin < 4
+        controlStates = ones(size(controls));
+      end
+      obj.push_back(qclab.qgates.MCZ(controls, target, controlStates));
+    end
 
-        function U2(obj, qubit, varargin)
-            if nargin < 2
-                qubit = 0;
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.U2(qubit, args{:}));
-        end
+    function X(obj, qubit)
+      if nargin < 2
+        qubit = 0;
+      end
+      obj.push_back(qclab.qgates.PauliX(qubit));
+    end
 
-        function U3(obj, qubit, varargin)
-            if nargin < 2
-                qubit = 0;
-                args = {};
-            else
-                args = varargin;
-            end
-            obj.push_back(qclab.qgates.U3(qubit, args{:}));
-        end
+    function  Y(obj, qubit)
+      if nargin < 2
+        qubit = 0;
+      end
+      obj.push_back(qclab.qgates.PauliY(qubit));
+    end
+
+    function Z(obj, qubit)
+      if nargin < 2
+        qubit = 0;
+      end
+      obj.push_back(qclab.qgates.PauliZ(qubit));
+    end
+
+    function Phase(obj, qubit, varargin)
+      if nargin < 2
+        qubit = 0;
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.Phase(qubit, args{:}));
+    end
+
+    function Phase45(obj, qubit)
+      if nargin < 2
+        qubit = 0;
+      end
+      obj.push_back(qclab.qgates.Phase45(qubit));
+    end
+
+    function T(obj, qubit)
+      if nargin < 2
+        qubit = 0;
+      end
+      obj.push_back(qclab.qgates.Phase45(qubit));
+    end
+    function Phase90(obj, qubit)
+      if nargin < 2
+        qubit = 0;
+      end
+      obj.push_back(qclab.qgates.Phase90(qubit));
+    end
+    function S(obj, qubit)
+      if nargin < 2
+        qubit = 0;
+      end
+      obj.push_back(qclab.qgates.Phase90(qubit));
+    end
+
+
+    function RX(obj, qubit, varargin)
+      if nargin < 2
+        qubit = 0;
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.RotationX(qubit, args{:}));
+    end
+
+    function RXX(obj, qubits, varargin)
+      if nargin < 2
+        qubits = [0, 1];
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.RotationXX(qubits, args{:}));
+    end
+
+    function RY(obj, qubit, varargin)
+      if nargin < 2
+        qubit = 0;
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.RotationY(qubit, args{:}));
+    end
+
+    function RYY(obj, qubits, varargin)
+      if nargin < 2
+        qubits = [0, 1];
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.RotationYY(qubits, args{:}));
+    end
+
+    function RZ(obj, qubit, varargin)
+      if nargin < 2
+        qubit = 0;
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.RotationZ(qubit, args{:}));
+    end
+
+    function RZZ(obj, qubits, varargin)
+      if nargin < 2
+        qubits = [0, 1];
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.RotationZZ(qubits, args{:}));
+    end
+
+    function SWAP(obj, qubit1, qubit2)
+      if nargin < 3
+        qubit1 = 0;
+        qubit2 = 1;
+      end
+      obj.push_back(qclab.qgates.SWAP(qubit1, qubit2));
+    end
+
+    function U2(obj, qubit, varargin)
+      if nargin < 2
+        qubit = 0;
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.U2(qubit, args{:}));
+    end
+
+    function U3(obj, qubit, varargin)
+      if nargin < 2
+        qubit = 0;
+        args = {};
+      else
+        args = varargin;
+      end
+      obj.push_back(qclab.qgates.U3(qubit, args{:}));
+    end
   end
 
   methods (Static)

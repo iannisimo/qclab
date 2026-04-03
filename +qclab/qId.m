@@ -5,14 +5,15 @@
 %
 %> @param n number of qubits
 %
-% (C) Copyright Daan Camps and Roel Van Beeumen 2021.  
+% (C) Copyright Daan Camps and Roel Van Beeumen 2021.
 % ==============================================================================
-function [I] = qId(n,issparse)
+function [I] = qId(n,issparse,d)
 if nargin < 2; issparse = false; end
-if issparse 
-  I = speye(2^n) ;
+if nargin < 3; d = 2; end
+if issparse
+  I = speye(d^n);
 else
-  I = eye(2^n);
+  I = eye(d^n);
 end
 end
 

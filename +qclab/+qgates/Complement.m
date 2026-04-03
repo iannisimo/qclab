@@ -36,7 +36,7 @@
 %
 % (C) Copyright Daan Camps and Roel Van Beeumen 2021.
 % ==============================================================================
-classdef PauliX < qclab.qgates.QGate1
+classdef Complement < qclab.qgates.QGate1
   methods (Static)
     % fixed
     function [bool] = fixed
@@ -50,7 +50,7 @@ classdef PauliX < qclab.qgates.QGate1
 
     % label for draw and tex function
     function [label] = label(obj, parameter, tex )
-      label = 'X';
+      label = 'Xvar';
     end
 
   end
@@ -59,23 +59,24 @@ classdef PauliX < qclab.qgates.QGate1
     % toQASM
     function [out] = toQASM(obj, fid, offset)
       if nargin == 2, offset = 0; end
-      qclab.IO.qasmPauliX( fid, obj.qubit + offset );
+      % TODO
+      % qclab.IO.qasmPauliX( fid, obj.qubit + offset );
       out = 0;
     end
 
     % equals
     function [bool] = equals(~,other)
-      bool = isa(other, 'qclab.qgates.PauliX');
+      bool = isa(other, 'qclab.qgates.Complement');
     end
 
     % dmatrix
     function [mat] = dmatrix(obj, d)
       isSparse = qclab.isSparse(obj.nbQubits);
       if (isSparse)
-        mat = circshift(speye(d), 1, 1);
+        mat = circshift(flipud(speye(d)), 1, 1);
       else
-        mat = circshift(eye(d), 1, 1);
+        mat = circshift(flipud(eye(d)), 1, 1);
       end
     end
   end
-end % PauliX
+end % Complement

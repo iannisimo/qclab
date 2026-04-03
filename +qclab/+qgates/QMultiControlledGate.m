@@ -33,13 +33,7 @@ classdef QMultiControlledGate < qclab.QObject
       if nargin < 2, controlStates = ones(size(controls)); end
       assert( length(controls) == length(unique(controls)) );
       assert( length(controls) == length(controlStates) ) ;
-      unique_States = sort(unique(controlStates)) ;
-      assert(length(unique_States) == 1 || length(unique_States) == 2) ;
-      if length(unique_States) == 1
-        assert( unique_States == 0 || unique_States == 1 ) ;
-      else
-        assert( unique_States(1) == 0 && unique_States(2) == 1 ) ;
-      end
+      assert(min(controlStates) >= 0);
 
       [obj.controls_,sortIdx] = sort(controls) ;
       obj.controlStates_ = controlStates(sortIdx) ;
@@ -60,40 +54,39 @@ classdef QMultiControlledGate < qclab.QObject
       nbQubits = int64(length(obj.controls_) + length(obj.targets)) ;
     end
 
-    % matrix
-    function [mat] = matrix(obj)
-      isSparse = qclab.isSparse(obj.nbQubits) ;
-      E0 = qclab.E0(isSparse); E1 = qclab.E1(isSparse);
+    % dmatrix
+    function [mat] = dmatrix(obj, d)
+      isSparse = qclab.isSparse(obj.nbQubits);
       Itarget = qclab.qId(obj.gate.nbQubits, isSparse); gate_mat = obj.gate.matrix;
       target_idx = find(obj.controls_ > max(obj.targets), 1);
       if isempty(target_idx)
         target_idx = length(obj.controls_) + 1;
       end
-      Cup = 1;
-      for i = 1:target_idx-1
-        if obj.controlStates_(i) == 0
-          Cup = kron(Cup, E0);
-        else
-          Cup = kron(Cup, E1);
-        end
-      end
-      Cdown = 1;
-      for i = target_idx:length(obj.controls_)
-        if obj.controlStates_(i) == 0
-          Cdown = kron(Cdown, E0);
-        else
-          Cdown = kron(Cdown, E1);
-        end
-      end
-      if size(Cup,1) > 1
+      nCup = target_idx-1;
+      if(nCup)
+        CSup = base2dec(num2str(obj.controlStates_(1:target_idx-1), '%d'), d) + 1;
+        % Cup: square diagonal matrix where only the target (up) is marked
+        Cup = diag(1*(0:d^nCup-1 == CSup));
         ICup = eye(size(Cup)) - Cup;
       else
+        Cup = 1;
         ICup = 1;
       end
-      if size(Cdown,1) > 1
+      nCdown = length(obj.controls_) - target_idx + 1;
+      if nCdown
+        CSdown = base2dec(num2str(obj.controlStates_(target_idx:length(obj.controls_)), '%d'), d) + 1;
+        % Cdown: square diagonal matrix where only the target (down) is marked
+        Cdown = diag(1*(0:d^nCdown-1 == CSdown));
         ICdown = eye(size(Cdown)) - Cdown;
       else
+        Cdown = 1;
         ICdown = 1;
+      end
+      if isSparse
+        Cup = sparse(Cup);
+        ICup = sparse(ICup);
+        Cdown = sparse(Cdown);
+        ICdown = sparse(ICdown);
       end
       if size(Cup,1) == 1
         mat = kron(gate_mat,Cdown) + ...
@@ -107,6 +100,11 @@ classdef QMultiControlledGate < qclab.QObject
           kron(kron(ICup,Itarget),Cdown) + ...
           kron(kron(ICup,Itarget),ICdown) ;
       end
+    end
+
+    % matrix
+    function [mat] = matrix(obj)
+      mat = obj.dmatrix(2);
     end
 
     % ==========================================================================
@@ -123,8 +121,9 @@ classdef QMultiControlledGate < qclab.QObject
     %> QMultiControlledGate is applied
     %> @param offset offset applied to qubits
     % ==========================================================================
-    function [current] = apply(obj, side, op, nbQubits, current, offset)
-      if nargin == 5, offset = 0; end
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d)
+      if nargin < 6, offset = 0; end
+      if nargin < 7, d = 2; end
       isSparse = qclab.isSparse(nbQubits) ;
       controls = obj.controls + offset ;
       targets = obj.targets + offset ;
@@ -135,23 +134,28 @@ classdef QMultiControlledGate < qclab.QObject
       assert( nbQubits > maxq );
       if isa(current, 'double')
         if strcmp(side,'L') % left
-          assert( size(current,2) == 2^nbQubits);
+          assert( size(current,2) == d^nbQubits);
         else % right
-          assert( size(current,1) == 2^nbQubits);
+          assert( size(current,1) == d^nbQubits);
         end
       else
-        assert( length(current.states{1}) == 2^nbQubits )
+        assert( length(current.states{1}) == d^nbQubits )
       end
-      E0 = qclab.E0(isSparse); E1 = qclab.E1(isSparse);
-      I1 = qclab.qId(1,isSparse);
-      Itarget = qclab.qId(obj.gate.nbQubits,isSparse);
+      % E0 = qclab.E0(isSparse); E1 = qclab.E1(isSparse);
+      I1 = qclab.qId(1,isSparse, d);
+      Itarget = qclab.qId(obj.gate.nbQubits,isSparse, d);
+      if d == 2 % qubit
+        mat_ = obj.gate.matrix;
+      else % qudit
+        mat_ = obj.gate.dmatrix(d);
+      end
       % operation
       if strcmp(op, 'N') % normal
-        mat = obj.gate.matrix;
+        mat = mat_;
       elseif strcmp(op, 'T') % transpose
-        mat = obj.gate.matrix.';
+        mat = mat_.';
       else % conjugate transpose
-        mat = obj.gate.matrix';
+        mat = mat_';
       end
       target_idx = find(controls > targetEnd, 1);
       if isempty(target_idx)
@@ -164,36 +168,30 @@ classdef QMultiControlledGate < qclab.QObject
       if target_idx > 1
         for i = controls(1):controls(target_idx-1)
           if i == controls(c_idx)
-            if obj.controlStates_(c_idx) == 0
-              Cup = kron(Cup, E0);
-            else
-              Cup = kron(Cup, E1);
-            end
+            Ec = diag(1*(0:d-1 == obj.controlStates_(c_idx)));
+            Cup = kron(Cup, Ec);
             c_idx = c_idx + 1 ;
           else
             Cup = kron(Cup, I1);
           end
         end
-        ICup = qclab.qId(log2(size(Cup,1)),isSparse) - Cup;
-        Sup = qclab.qId(targetStart - controls(target_idx-1) - 1,isSparse) ;
+        ICup = eye(size(Cup)) - Cup;
+        Sup = qclab.qId(targetStart - controls(target_idx-1) - 1,isSparse,d) ;
       end
       % (I)Controls down
       Cdown = 1; ICdown = 1; Sdown = 1;
       if target_idx <= length(controls)
         for i = controls(target_idx):controls(end)
           if i == controls(c_idx)
-            if obj.controlStates_(c_idx) == 0
-              Cdown = kron(Cdown, E0);
-            else
-              Cdown = kron(Cdown, E1);
-            end
+            Ec = diag(1:d == obj.controlStates_(c_idx));
+            Cdown = kron(Cdown, Ec);
             c_idx = c_idx + 1 ;
           else
             Cdown = kron(Cdown, I1);
           end
         end
-        ICdown = qclab.qId(log2(size(Cdown,1)),isSparse) - Cdown;
-        Sdown = qclab.qId(controls(target_idx) - targetEnd - 1,isSparse);
+        ICdown = eye(size(Cdown)) - Cdown;
+        Sdown = qclab.qId(controls(target_idx) - targetEnd - 1,isSparse,d);
       end
       if size(Cup,1) == 1
         mats = kron(mat,kron(Sdown,Cdown)) + ...
@@ -207,17 +205,17 @@ classdef QMultiControlledGate < qclab.QObject
           kron(ICup,kron(Sup,kron(Itarget,kron(Sdown,Cdown)))) + ...
           kron(ICup,kron(Sup,kron(Itarget,kron(Sdown,ICdown)))) ;
       end
-      s = log2(size(mats,1));
+      s = maxq - minq + 1;
 
       if ( minq == 0 && maxq == nbQubits - 1)
         matn = mats ;
       elseif minq == 0
-        matn = kron(mats, qclab.qId(nbQubits - s,isSparse));
+        matn = kron(mats, qclab.qId(nbQubits - s,isSparse, d));
       elseif maxq == nbQubits - 1
-        matn = kron(qclab.qId(nbQubits - s,isSparse), mats);
+        matn = kron(qclab.qId(nbQubits - s,isSparse, d), mats);
       else
-        matn = kron(qclab.qId(minq, isSparse), kron(mats, ...
-          qclab.qId(nbQubits - maxq - 1,isSparse))) ;
+        matn = kron(qclab.qId(minq, isSparse, d), kron(mats, ...
+          qclab.qId(nbQubits - maxq - 1,isSparse, d))) ;
       end
       % apply
       current = qclab.applyGateTo( current, matn, side ) ;
@@ -248,13 +246,7 @@ classdef QMultiControlledGate < qclab.QObject
     %> `controlState`.
     function setControlStates(obj, controlStates)
       assert( length(obj.controls_) == length(controlStates) ) ;
-      unique_States = sort(unique(controlStates)) ;
-      assert(length(unique_States) == 1 || length(unique_States) == 2) ;
-      if length(unique_States) == 1
-        assert( unique_States == 0 || unique_States == 1 ) ;
-      else
-        assert( unique_States(1) == 0 && unique_States(2) == 1 ) ;
-      end
+      assert( min(controlStates) >= 0 )
       obj.controlStates_ = controlStates ;
     end
 
@@ -356,95 +348,95 @@ classdef QMultiControlledGate < qclab.QObject
       else % top part of gate
         gateCell{3*cellRow-2} = [ space, ulc, repmat(h, 1, width), urc ];
       end
-        if obj.gate.nbQubits == 1
-          gateCell{3*cellRow-1} = [ h, vl, label, vr ];
-        end
-        if obj.gate.nbQubits >= 2
-          gateCell{3*cellRow-1} = [ h, vl, repmat(space, 1, width), vr ];
-          gateCell{3*cellRow} = [ space, v, repmat(space, 1, width), v ];
-          cellRow = cellRow + 1 ;
-          if obj.gate.nbQubits > 2
-            for k = 2:obj.gate.nbQubits-1
-              gateCell{3*cellRow-2} = [ space, v, repmat(space, 1, width), v ];
-              gateCell{3*cellRow-1} = [ h, vl, repmat(space, 1, width), vr ];
-              gateCell{3*cellRow} = [ space, v, repmat(space, 1, width), v ];
-              cellRow = cellRow + 1 ;
-            end
-          end
-          gateCell{3*cellRow-2} = [ space, v, repmat(space, 1, width), v ];
-          gateCell{3*cellRow-1} = [ h, vl, repmat(space, 1, width), vr];
-          if mod(obj.gate.nbQubits,2) == 0
-            gateCell{3*(cellRow) - 3*obj.gate.nbQubits/2} = [ space, v, label, v ];
-          else
-            gateCell{3*(cellRow)+1 - floor(3*obj.gate.nbQubits/2)} = [ h, vl, label, vr ];
-          end
-        end
-        % lower part
-        % bottom part of gate
-        if target_idx <= length(controls)
-          gateCell{3*cellRow} = [ space, blc, repmat(h, 1, hwidth), hb, ...
-            repmat(h, 1, width - hwidth - 1), brc ];
-          cellRow = cellRow + 1 ;
-          % connect to next control
-          for i = targetEnd+1:controls(target_idx)-1
-            gateCell{3*cellRow-2} = [ repmat(space, 1, hwidth + 2), v, ...
-              repmat(space, 1, width - hwidth) ];
-            gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), vh, ...
-              repmat(h, 1, width - hwidth) ];
-            gateCell{3*cellRow} = [ repmat(space, 1, hwidth + 2), v, ...
-              repmat(space, 1, width - hwidth) ];
+      if obj.gate.nbQubits == 1
+        gateCell{3*cellRow-1} = [ h, vl, label, vr ];
+      end
+      if obj.gate.nbQubits >= 2
+        gateCell{3*cellRow-1} = [ h, vl, repmat(space, 1, width), vr ];
+        gateCell{3*cellRow} = [ space, v, repmat(space, 1, width), v ];
+        cellRow = cellRow + 1 ;
+        if obj.gate.nbQubits > 2
+          for k = 2:obj.gate.nbQubits-1
+            gateCell{3*cellRow-2} = [ space, v, repmat(space, 1, width), v ];
+            gateCell{3*cellRow-1} = [ h, vl, repmat(space, 1, width), vr ];
+            gateCell{3*cellRow} = [ space, v, repmat(space, 1, width), v ];
             cellRow = cellRow + 1 ;
           end
-          % down-middle controls (if any)
-          for i = controls(target_idx):controls(end)-1
-            gateCell{3*cellRow-2} = [ repmat(space, 1, hwidth + 2), v, ...
-              repmat(space, 1, width - hwidth) ];
-            if i == controls(controlIdx) % it is a controlled node
-              if obj.controlStates_(controlIdx) == 0
-                gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), ctrlo, ...
-                  repmat(h, 1, width - hwidth) ];
-              else
-                gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), ctrl, ...
-                  repmat(h, 1, width - hwidth) ];
-              end
-              controlIdx = controlIdx + 1 ;
-            else % not a controlled node
-              gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), vh, ...
-                repmat(h, 1, width - hwidth) ];
-            end
-            gateCell{3*cellRow} = [ repmat(space, 1, hwidth + 2), v, ...
-              repmat(space, 1, width - hwidth) ];
-            cellRow = cellRow + 1 ;
-          end
-          % final control up
+        end
+        gateCell{3*cellRow-2} = [ space, v, repmat(space, 1, width), v ];
+        gateCell{3*cellRow-1} = [ h, vl, repmat(space, 1, width), vr];
+        if mod(obj.gate.nbQubits,2) == 0
+          gateCell{3*(cellRow) - 3*obj.gate.nbQubits/2} = [ space, v, label, v ];
+        else
+          gateCell{3*(cellRow)+1 - floor(3*obj.gate.nbQubits/2)} = [ h, vl, label, vr ];
+        end
+      end
+      % lower part
+      % bottom part of gate
+      if target_idx <= length(controls)
+        gateCell{3*cellRow} = [ space, blc, repmat(h, 1, hwidth), hb, ...
+          repmat(h, 1, width - hwidth - 1), brc ];
+        cellRow = cellRow + 1 ;
+        % connect to next control
+        for i = targetEnd+1:controls(target_idx)-1
           gateCell{3*cellRow-2} = [ repmat(space, 1, hwidth + 2), v, ...
             repmat(space, 1, width - hwidth) ];
-          if obj.controlStates_(controlIdx) == 0
-            gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), ctrlo, ...
-              repmat(h, 1, width - hwidth) ];
-          else
-            gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), ctrl, ...
+          gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), vh, ...
+            repmat(h, 1, width - hwidth) ];
+          gateCell{3*cellRow} = [ repmat(space, 1, hwidth + 2), v, ...
+            repmat(space, 1, width - hwidth) ];
+          cellRow = cellRow + 1 ;
+        end
+        % down-middle controls (if any)
+        for i = controls(target_idx):controls(end)-1
+          gateCell{3*cellRow-2} = [ repmat(space, 1, hwidth + 2), v, ...
+            repmat(space, 1, width - hwidth) ];
+          if i == controls(controlIdx) % it is a controlled node
+            if obj.controlStates_(controlIdx) == 0
+              gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), ctrlo, ...
+                repmat(h, 1, width - hwidth) ];
+            else
+              gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), ctrl, ...
+                repmat(h, 1, width - hwidth) ];
+            end
+            controlIdx = controlIdx + 1 ;
+          else % not a controlled node
+            gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), vh, ...
               repmat(h, 1, width - hwidth) ];
           end
-          gateCell{3*cellRow} = repmat(space, 1, width + 3);
-        else
-          % bottom part of gate
-          gateCell{3*cellRow} = [ space, blc, repmat(h, 1, width), brc ];
+          gateCell{3*cellRow} = [ repmat(space, 1, hwidth + 2), v, ...
+            repmat(space, 1, width - hwidth) ];
+          cellRow = cellRow + 1 ;
         end
-
-        if fid > 0
-          qubits = (minq:maxq) + offset;
-          qclab.drawCellArray( fid, gateCell, qubits );
-          out = 0;
+        % final control up
+        gateCell{3*cellRow-2} = [ repmat(space, 1, hwidth + 2), v, ...
+          repmat(space, 1, width - hwidth) ];
+        if obj.controlStates_(controlIdx) == 0
+          gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), ctrlo, ...
+            repmat(h, 1, width - hwidth) ];
         else
-          out = gateCell ;
+          gateCell{3*cellRow-1} = [ repmat(h, 1, hwidth + 2), ctrl, ...
+            repmat(h, 1, width - hwidth) ];
         end
+        gateCell{3*cellRow} = repmat(space, 1, width + 3);
+      else
+        % bottom part of gate
+        gateCell{3*cellRow} = [ space, blc, repmat(h, 1, width), brc ];
+      end
 
-        if nargout > 0
+      if fid > 0
+        qubits = (minq:maxq) + offset;
+        qclab.drawCellArray( fid, gateCell, qubits );
+        out = 0;
+      else
+        out = gateCell ;
+      end
+
+      if nargout > 0
         varargout = {out};
-        else
-          varargout = {};
-        end
+      else
+        varargout = {};
+      end
     end
 
     % ==========================================================================
@@ -515,12 +507,12 @@ classdef QMultiControlledGate < qclab.QObject
         cellRow = cellRow + 1 ;
       else
         gateCell{cellRow} = ['&\t\\multigate{' int2str(obj.gate.nbQubits-1) '}' ...
-        '{\\mathrm{', label,'}}\t'] ;
-      cellRow = cellRow + 1 ;
-      for i = 2:obj.gate.nbQubits
-        gateCell{cellRow} = ['&\t\\ghost{\\mathrm{', label,'}}\t'] ;
+          '{\\mathrm{', label,'}}\t'] ;
         cellRow = cellRow + 1 ;
-      end
+        for i = 2:obj.gate.nbQubits
+          gateCell{cellRow} = ['&\t\\ghost{\\mathrm{', label,'}}\t'] ;
+          cellRow = cellRow + 1 ;
+        end
       end
       % lower part (if any)
       if target_idx <= length(controls)
@@ -594,16 +586,16 @@ classdef QMultiControlledGate < qclab.QObject
       props = struct();
       props.nbQubits = obj.nbQubits;
       if length(obj.controls) == 1
-      props.Control = obj.controls;
+        props.Control = obj.controls;
       else
-      props.Controls = obj.controls;
+        props.Controls = obj.controls;
       end
       if length(obj.targets) == 1
         props.Target = obj.targets;
       else
         props.Targets = obj.targets;
       end
-     
+
       groups = PropertyGroup(props);
     end
   end

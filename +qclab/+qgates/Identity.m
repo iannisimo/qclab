@@ -38,42 +38,49 @@
 %>
 %> 1-qubit Identity gate with matrix representation:
 %>
-%> \f[\begin{bmatrix} 1 & 0\\ 
+%> \f[\begin{bmatrix} 1 & 0\\
 %>                    0 & 1 \end{bmatrix}\f]
 %>
 %
-% (C) Copyright Daan Camps and Roel Van Beeumen 2021.  
+% (C) Copyright Daan Camps and Roel Van Beeumen 2021.
 % ==============================================================================
 classdef Identity < qclab.qgates.QGate1
-  
+
   methods (Static)
     % fixed
     function [bool] = fixed
       bool = true;
     end
-    
+
     % matrix
     function [mat] = matrix
       mat = eye(2);
     end
-    
+
     % toQASM
     function [out] = toQASM
       % do nothing
       out = 0;
     end
-    
+
     % label for draw and tex function
     function [label] = label(obj, parameter, tex )
       label = 'I';
     end
-    
+
   end
-  
-  methods 
+
+  methods
     % equals
     function [bool] = equals(~,other)
       bool = isa(other,'qclab.qgates.Identity');
+    end
+
+    function [mat] = dmatrix(obj, d)
+      isSparse = qclab.isSparse(obj.nbQubits);
+      if isSparse, mat = speye(d);
+      else, mat = eye(d);
+      end
     end
   end
 end

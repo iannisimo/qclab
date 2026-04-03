@@ -18,7 +18,7 @@ classdef Barrier < qclab.QObject
     % Class constructor  =======================================================
     %> @brief
     %>
-    %> @param 
+    %> @param
     % ==========================================================================
     function obj = Barrier(qubits, visibility)
       if nargin == 1, visibility = false; end
@@ -54,6 +54,12 @@ classdef Barrier < qclab.QObject
       mat = qclab.qId(obj.nbQubits,isSparse);
     end
 
+    % dmatrix
+    function [mat] = dmatrix(obj, d)
+      isSparse = qclab.isSparse(obj.nbQubits);
+      mat = qclab.qId(obj.nbQubits,isSparse,d);
+    end
+
     % ==========================================================================
     %> @brief Apply the QMultiControlledGate to a matrix or a struct of
     %> state vectors
@@ -68,18 +74,18 @@ classdef Barrier < qclab.QObject
     %> QMultiControlledGate is applied
     %> @param offset offset applied to qubits
     % ==========================================================================
-    function [current] = apply(obj, side, op, nbQubits, current, offset)
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d)
       isSparse = qclab.isSparse(nbQubits) ;
       if isa(current, 'double')
         if strcmp(side,'L') % left
-          assert( size(current,2) == 2^nbQubits);
+          assert( size(current,2) == d^nbQubits);
         else % right
-          assert( size(current,1) == 2^nbQubits);
+          assert( size(current,1) == d^nbQubits);
         end
       else
-        assert( length(current.states{1}) == 2^nbQubits )
+        assert( length(current.states{1}) == d^nbQubits )
       end
-      matn = qclab.qId(nbQubits, isSparse);
+      matn = qclab.qId(nbQubits, isSparse,d);
       % apply
       current = qclab.applyGateTo( current, matn, side ) ;
     end
@@ -89,7 +95,7 @@ classdef Barrier < qclab.QObject
       objprime = copy( obj );
     end
 
-     % toQASM
+    % toQASM
     function [out] = toQASM(obj, fid, offset)
       out = -1;
     end
@@ -120,7 +126,7 @@ classdef Barrier < qclab.QObject
       if nargin < 4, offset = 0; end
       qclab.drawCommands ; % load draw commands
 
-      
+
       nbQubits = obj.nbQubits;
       visibility = obj.visibility_;
 
@@ -147,7 +153,7 @@ classdef Barrier < qclab.QObject
       else
         out = gateCell ;
       end
-      
+
       if nargout > 0
         varargout = {out};
       else
@@ -175,13 +181,13 @@ classdef Barrier < qclab.QObject
       if nargin < 2, fid = 1; end
       if nargin < 3, parameter = 'N'; end
       if nargin < 4, offset = 0; end
-     
+
 
       gateCell = cell( obj.nbQubits, 1 );
       lengthBarrier = int2str(obj.nbQubits-1);
-      
+
       for i = 1:obj.nbQubits
-     gateCell{i} = ['&\t\\qw\t'] ;
+        gateCell{i} = ['&\t\\qw\t'] ;
       end
       if obj.visibility_ == true
         gateCell{1} = ['&\t\\qw\\barrier[-1.35em]{' lengthBarrier '}\t'] ;
@@ -214,7 +220,7 @@ classdef Barrier < qclab.QObject
       bool = false ;
     end
     % fixed
-     function [bool] = fixed
+    function [bool] = fixed
       bool = true;
     end
   end

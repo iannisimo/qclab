@@ -1,60 +1,23 @@
-% MatrixGate – Multi-qubit gate defined by a unitary matrix
-% The MatrixGate class implements a general multi-qubit quantum gate based on
-% a user-defined unitary matrix. The gate applies the specified unitary to a
-% consecutive set of qubits.
-%
-% The matrix must be square of size 2^n × 2^n, where n is the number of qubits.
-%
-% Creation
-%   Syntax
-%     G = qclab.qgates.MatrixGate(qubits, unitary)
-%       - Creates a matrix gate acting on the given `qubits` using the specified
-%         unitary matrix. A default label `'U'` is used for display.
-%
-%     G = qclab.qgates.MatrixGate(qubits, unitary, label)
-%       - Same as above, but also sets the display label for the gate.
-%
-%   Input Arguments
-%     qubits  - vector of consecutive non-negative integers specifying the qubits
-%               on which the matrix gate acts
-%     unitary - unitary matrix of size 2^n × 2^n, where n = length(qubits)
-%     label   - string label used for visualization (default = 'U')
-%
-%   Output
-%     G - A quantum object of type `MatrixGate`, representing a custom
-%         multi-qubit quantum gate.
-%
-% Example:
-%   Apply a 2-qubit custom unitary to qubits 1 and 2:
-%     U = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1];  % example swap-like matrix
-%     G = qclab.qgates.MatrixGate([1 2], U, 'myGate');
-
-%> @file MatrixGate.m
-%> @brief Implements MatrixGate class
-% ==============================================================================
-%> @class MatrixGate
-%> @brief Class for multi-qubit gate defined by a unitary matrix.
-%>
-%>
-% (C) Copyright Daan Camps, Sophia Keip and Roel Van Beeumen 2025.
-% ==============================================================================
-
-classdef MatrixGate < qclab.QObject
+classdef FunctionGate < qclab.QObject
 
   properties (Access = protected)
     %> qubits of this multi-qubit gate.
     qubits_ int64
-    %> unitary representing this multi-qubit gate.
-    unitary_ double
+    %> apply function
+    apply_ function_handle
     %> label of this multi-qubit gate
     label_ char
+    %> operation (N: normal, T: Transpose, C: conjugate transpose)
+    op_ char = ' '
   end
 
   methods
     % Class constructor  =======================================================
     %> @brief Constructor for MatrixGate objects
     % ==========================================================================
-    function obj = MatrixGate(qubits, unitary, label, d)
+    function obj = FunctionGate(qubits, apply, label)
+      disp(nargin(apply))
+      return
       if nargin < 3, label = 'U'; end
       if nargin < 4, d = 2; end
       % qubits must be consecutive non negative integers
@@ -71,6 +34,12 @@ classdef MatrixGate < qclab.QObject
       obj.qubits_ = qubits ;
       obj.unitary_ = unitary ;
       obj.label_ = label ;
+    end
+
+    % operation
+    function setOp(obj, op)
+      assert(contains('NTC ', op));
+      obj.op_ = op;
     end
 
     % qubit
@@ -168,8 +137,8 @@ classdef MatrixGate < qclab.QObject
 
     % ctranspose
     function objprime = ctranspose( obj )
-      unitary = obj.matrix ;
-      objprime = qclab.qgates.MatrixGate( obj.qubits, unitary', obj.label_ );
+      objprime = qclab.qgates.FunctionGate(obj.qubits, @obj.apply, obj.label_);
+      objprime.setOp('C');
     end
 
     % equals

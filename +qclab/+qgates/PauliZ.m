@@ -3,7 +3,7 @@
 % flips the phase of the |1⟩ state while leaving the |0⟩ state unchanged.
 %
 % The matrix representation of the Pauli-Z gate is:
-%   Z = [1  0; 
+%   Z = [1  0;
 %        0 -1]
 %
 % Creation
@@ -31,10 +31,10 @@
 %>
 %> 1-qubit Pauli-Z gate with matrix representation:
 %>
-%> \f[\begin{bmatrix} 1 & 0\\ 
+%> \f[\begin{bmatrix} 1 & 0\\
 %>                    0 & -1 \end{bmatrix}\f]
 %
-% (C) Copyright Daan Camps and Roel Van Beeumen 2021.  
+% (C) Copyright Daan Camps and Roel Van Beeumen 2021.
 % ==============================================================================
 classdef PauliZ < qclab.qgates.QGate1
   methods (Static)
@@ -42,19 +42,19 @@ classdef PauliZ < qclab.qgates.QGate1
     function [bool] = fixed
       bool = true;
     end
-    
+
     % matrix
     function [mat] = matrix
       mat = [1 0; 0 -1];
     end
-    
+
     % label for draw and tex function
     function [label] = label(obj, parameter, tex )
       label = 'Z';
     end
-    
+
   end
-  
+
   methods
     % toQASM
     function [out] = toQASM(obj, fid, offset)
@@ -62,10 +62,17 @@ classdef PauliZ < qclab.qgates.QGate1
       qclab.IO.qasmPauliZ( fid, obj.qubit + offset );
       out = 0;
     end
-    
+
     % equals
     function [bool] = equals(~,other)
       bool = isa(other, 'qclab.qgates.PauliZ');
+    end
+
+    % dmatrix
+    function [mat] = dmatrix(obj, d)
+      isSparse = qclab.isSparse(obj.nbQubits);
+      mat = diag(exp(1j * (2 * pi / d) * (0:d-1)));
+      if isSparse, mat = sparse(mat); end
     end
   end
 end % PauliX

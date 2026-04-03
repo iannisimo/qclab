@@ -100,7 +100,7 @@ classdef iSWAP < qclab.qgates.QGate2
     end
     
     % apply
-    function [current] = apply(obj, side, op, nbQubits, current, offset)
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d)
       if nargin == 5, offset = 0; end
       assert( nbQubits >= 2 );
       if isa(current, 'double')

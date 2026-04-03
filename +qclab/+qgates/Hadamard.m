@@ -1,10 +1,10 @@
 % Hadamard - 1-qubit Hadamard gate for quantum circuits
-% The Hadamard class implements a 1-qubit Hadamard gate. This gate transforms 
-% the quantum state |0⟩ into the superposition (|0⟩ + |1⟩) / sqrt(2) and |1⟩ 
+% The Hadamard class implements a 1-qubit Hadamard gate. This gate transforms
+% the quantum state |0⟩ into the superposition (|0⟩ + |1⟩) / sqrt(2) and |1⟩
 % into (|0⟩ - |1⟩) / sqrt(2).
 %
 % The matrix representation of the Hadamard gate is:
-%   H = (1 / sqrt(2)) * [1  1; 
+%   H = (1 / sqrt(2)) * [1  1;
 %                        1  -1]
 %
 % Creation
@@ -31,10 +31,10 @@
 %>
 %> 1-qubit Hadamard gate with matrix representation:
 %>
-%> \f[\frac{1}{\sqrt{2}}\begin{bmatrix} 1   &  1\\ 
+%> \f[\frac{1}{\sqrt{2}}\begin{bmatrix} 1   &  1\\
 %>                    1 & -1 \end{bmatrix}\f]
 %>
-% (C) Copyright Daan Camps and Roel Van Beeumen 2021.  
+% (C) Copyright Daan Camps and Roel Van Beeumen 2021.
 % ==============================================================================
 classdef Hadamard < qclab.qgates.QGate1
   methods (Static)
@@ -42,21 +42,21 @@ classdef Hadamard < qclab.qgates.QGate1
     function [bool] = fixed
       bool = true;
     end
-    
+
     % matrix
     function [mat] = matrix
       sqrt2 = 1/sqrt(2);
-      mat = [sqrt2, sqrt2; 
-             sqrt2, -sqrt2];
+      mat = [sqrt2, sqrt2;
+        sqrt2, -sqrt2];
     end
-    
+
     % label for draw and tex function
     function [label] = label(obj, parameter, tex )
       label = 'H';
     end
-    
+
   end
-  
+
   methods
     % toQASM
     function [out] = toQASM(obj, fid, offset)
@@ -64,10 +64,18 @@ classdef Hadamard < qclab.qgates.QGate1
       qclab.IO.qasmHadamard( fid, obj.qubit + offset );
       out = 0;
     end
-    
+
     % equals
     function [bool] = equals(~,other)
       bool = isa(other, 'qclab.qgates.Hadamard');
+    end
+
+    % dmatrix
+    function [mat] = dmatrix(obj, d)
+      isSparse = qclab.isSparse(obj.nbQubits);
+      n = 0:d-1;
+      mat = exp(1j * (2 * pi / d) * (n' * n)) / sqrt(d);
+      if isSparse, mat = sparse(mat); end
     end
   end
 end % Hadamard
