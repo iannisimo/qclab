@@ -31,7 +31,7 @@ and is compatible with MATLAB R2020b or newer.
 		cd test/
 		runTests.m
  
-4. Generate documentation with doxygen. Requires [doxygen](https://www.doxygen.nl/index.html) and [doxymatlab](https://github.com/simgunz/doxymatlab). Adjust tags `FILTER_PATTERNS` and `FILTER_SOURCE_PATTERNS`  in `doxygen/Doxyfile.dox` to local `m2cpp.pl` script.
+4. Generate documentation with doxygen. Requires [doxygen](https://www.doxygen.nl/index.html) and [doxymatlab](https://github.com/simgunz/doxymatlab). Adjust tags `FILTER_PATTERNS` and `FILTER_SOURCE_PATTERNS`  in `doxygen/Doxyfile.dox` to point to your local m2cpp script (Linux/macOS: m2cpp.pl, Windows: m2cpp.bat).
 	
 		cd doc/doxygen/
 		doxygen Doxyfile.dox
@@ -50,6 +50,8 @@ The QCLAB Toolbox can also be opened and tested using MATLAB online.
 - [Roel Van Beeumen](http://www.roelvanbeeumen.be/) (Lawrence Berkeley National Laboratory) - rvanbeeumen@lbl.gov
 
 ## Recent Releases
+- v1.2.0
+  - Introduced `HandleCircuit` and `MCPhaseGate` 
 - v1.1.1
   - Bugfix for `objectFlattened` function of `QCircuit`
   - Improved docstrings for quantum gates

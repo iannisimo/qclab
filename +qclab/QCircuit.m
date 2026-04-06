@@ -525,6 +525,16 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
           objectsFlattened = [objectsFlattened(1:i-1), sub_objects, ...
             objectsFlattened(i+1:end)];
           i = i + length(sub_objects);
+        elseif isa(objectsFlattened(i), 'qclab.HandleCircuit')
+          sub_circuit = objectsFlattened(i).circuit ;
+          sub_objects = sub_circuit.objectsFlattened;
+          offset = sub_circuit.offset + objectsFlattened(i).offset;
+          for j = 1:length(sub_objects)
+            sub_objects(j).setQubits(sub_objects(j).qubits + offset);
+          end
+          objectsFlattened = [objectsFlattened(1:i-1), sub_objects, ...
+            objectsFlattened(i+1:end)];
+          i = i + length(sub_objects);
         else
           i = i + 1;
         end
