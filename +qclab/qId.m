@@ -3,16 +3,19 @@
 % ==============================================================================
 %> @brief Identity matrix on n qubits
 %
-%> @param n number of qubits
+%> @param n: number of qubits
+%> @param issparse: use speye instead of eye (default: false)
+%> @param d: number of energy levels (default: 2)
 %
 % (C) Copyright Daan Camps and Roel Van Beeumen 2021.  
 % ==============================================================================
-function [I] = qId(n,issparse)
-if nargin < 2; issparse = false; end
+function [I] = qId(n, issparse, d)
+if nargin <= 1, issparse = false; end
+if nargin <= 2, d = 2; end
 if issparse 
-  I = speye(2^n) ;
+  I = speye(d^n) ;
 else
-  I = eye(2^n);
+  I = eye(d^n);
 end
 end
 
