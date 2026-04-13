@@ -5,11 +5,14 @@
 %   Syntax
 %     obj = qclab.QCircuit( nbQubits )
 %     obj = qclab.QCircuit( nbQubits, offset )
+%     obj = qclab.QCircuit( nbQubits, offset, d )
 %
 %   Input Arguments
 %     nbQubits - number of qubits (positive integer)
 %     offset   - (optional) offset of the quantum circuit
 %                (default: 0)
+%     d        - (optional) number of energy levels of a single qudit
+%                (default: 2)
 %
 %   Output:
 %     obj - A quantum object of type `QCircuit`.
@@ -74,17 +77,22 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
     label_ char = ''
     %> Number of measurement in the circuit.
     nbMeasurements_(1,1) int64
+    %> Number of available energy levels
+    d_ uint8 = 2
   end
 
   methods
     %> @brief Constructs a quantum circuit with `nbQubits` qubits starting at
     %> qubit `offset`. The default value for `offset` is 0.
-    function obj = QCircuit( nbQubits, offset )
-      if nargin == 1, offset = 0; end
+    function obj = QCircuit( nbQubits, offset, d )
+      if nargin <= 1, offset = 0; end
+      if nargin <= 2, d = 2; end
       assert(qclab.isNonNegInteger(nbQubits-1)) ;
       assert(qclab.isNonNegInteger(offset)) ;
+      assert(qclab.isNonNegInteger(d - 2))
       obj.nbQubits_ = nbQubits ;
       obj.offset_ = offset ;
+      obj.d_ = d;
     end
 
     % nbQubits
@@ -155,7 +163,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       %   mat - Unitary matrix representing the quantum circuit (double).
       assert(obj.nbMeasurements == 0)
       issparse = qclab.isSparse(obj.nbQubits_);
-      mat = qclab.qId(obj.nbQubits, issparse);
+      mat = qclab.qId(obj.nbQubits, issparse, obj.d_);
       for i = 1:length(obj.objects_)
         mat = apply(obj.objects_(i), 'R', 'N', obj.nbQubits, mat) ;
       end
@@ -183,12 +191,12 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
         seed = 1;
       end
       if isa(v, 'char')
-        i = bin2dec(v);
-        v = zeros( 2^strlength(v),1 );
+        i = base2dec(v, double(obj.d_));
+        v = zeros(d^strlength(v), 1);
         v(i+1) = 1;
       end
       nbQubits = obj.nbQubits_;
-      assert(size(v,1) == 2^nbQubits);
+      assert(size(v,1) == obj.d_^nbQubits);
       for i = 1:length(obj.objects_)
         v = apply(obj.objects_(i), 'R', 'N', nbQubits, v);
       end
@@ -225,12 +233,13 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
     %> @param current current state to which QCircuit is applied
     %> @param offset offset applied to qubit
     % ==========================================================================
-    function [current] = apply(obj, side, op, nbQubits, current, offset )
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d )
       % apply - Apply the quantum circuit to an input vector or state.
       %
       % Syntax:
       %   current = obj.apply(side, op, nbQubits, current)
       %   current = obj.apply(side, op, nbQubits, current, offset)
+      %   current = obj.apply(side, op, nbQubits, current, offset, d)
       %
       % Inputs:
       %   side     - 'L' or 'R' for respectively left or right side of
@@ -240,33 +249,36 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       %   nbQubits - qubit size of `current`.
       %   current  - Input matrix or struct of state vectors.
       %   offset   - Qubit offset (default: 0).
+      %   d        - Number of energy levels (default: 2)
       %
       % Outputs:
       %   current - Updated state after applying the circuit (struct or double).
+      %TODO check if needs to use d or obj.d_
       assert( nbQubits >= obj.nbQubits );
-      if nargin == 5, offset = 0; end
+      if nargin <= 5, offset = 0; end
+      if nargin <= 6, d = 2; end
       if strcmp(op, 'N')
         if strcmp(side,'L') % Left + NoTrans
           for i = length(obj.objects_):-1:1
             current = apply(obj.objects_(i), side, op, nbQubits, current, ...
-              obj.qubit + offset );
+              obj.qubit + offset, d );
           end
         else % Right + NoTrans
           for i = 1:length(obj.objects_)
             current = apply(obj.objects_(i), side, op, nbQubits, current, ...
-              obj.qubit + offset );
+              obj.qubit + offset, d );
           end
         end
       else
         if strcmp(side,'L') % Left + [Conj]Trans
           for i = 1:length(obj.objects_)
             current = apply(obj.objects_(i), side, op, nbQubits, current, ...
-              obj.qubit + offset );
+              obj.qubit + offset, d );
           end
         else % Right + [Conj]Trans
           for i = length(obj.objects_):-1:1
             current = apply(obj.objects_(i), side, op, nbQubits, current, ...
-              obj.qubit + offset );
+              obj.qubit + offset, d );
           end
         end
       end
@@ -323,6 +335,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
     end
 
     % toQASM
+    % TODO extend to DITQASM(?)
     function [out] = toQASM(obj, fid, offset)
       % toQASM - Writes the QASM code of this quantum object to the given file id.
       %
@@ -737,6 +750,11 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       %   bool - True if the objects can be inserted, false otherwise.
       bool = true;
       for i = 1: length(objects)
+        % TODO check if objects(i) is compatible with qudits
+        if obj.d_ ~= 2 && false
+          bool = false;
+          return
+        end
         qubits = objects(i).qubits;
         if max(qubits) >= obj.nbQubits_
           bool = false;
@@ -843,9 +861,9 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       %              - 'L' print long parameter.
       %   offset   - Offset applied to the qubit indices (default is 0).
 
-      if nargin < 2, fid = 1; end
-      if nargin < 3, parameter = 'N'; end
-      if nargin < 4, offset = 0; end
+      if nargin <= 1, fid = 1; end
+      if nargin <= 2, parameter = 'N'; end
+      if nargin <= 3, offset = 0; end
       qclab.drawCommands ; % load draw commands
       if obj.block_ == false
         circuitCell = cell(3*obj.nbQubits,1); % cell array to store all strings
