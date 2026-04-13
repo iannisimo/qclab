@@ -75,5 +75,10 @@ classdef Identity < qclab.qgates.QGate1
     function [bool] = equals(~,other)
       bool = isa(other,'qclab.qgates.Identity');
     end
+
+    % dmatrix
+    function [mat] = dmatrix(~, d)
+      mat = eye(d);
+    end
   end
 end
