@@ -751,7 +751,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       bool = true;
       for i = 1: length(objects)
         % TODO check if objects(i) is compatible with qudits
-        if obj.d_ ~= 2 && false
+        if obj.d_ ~= 2 && ismethod(objects(i), 'matrix') && ~ismethod(objects(i), 'dmatrix')
           bool = false;
           return
         end
