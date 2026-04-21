@@ -57,10 +57,8 @@ classdef QControlledGate2 < qclab.qgates.QGate2
     function [mat] = matrix(obj, d)
       if nargin <= 1, d = 2; end
       isSparse = qclab.isSparse(obj.nbQubits);
-      c_ = zeros(1, d);
-      c_(obj.controlState_ + 1) = 1;
-      Ec = diag(c_);
-      En = diag(ones(1, d) - c_);
+      Ec = diag(0:d-1 == obj.controlState_);
+      En = diag(0:d-1 ~= obj.controlState_);
       I1 = qclab.qId(1, isSparse, d);
       CG = obj.gate.matrix(d);
       if(obj.control_ < obj.target)
@@ -105,10 +103,8 @@ classdef QControlledGate2 < qclab.qgates.QGate2
           current, offset, d);
         return
       end
-      c_ = zeros(1, d);
-      c_(obj.controlState_ + 1) = 1;
-      Ec = diag(c_);
-      En = diag(ones(1, d) - c_);
+      Ec = diag(0:d-1 == obj.controlState_);
+      En = diag(0:d-1 ~= obj.controlState_);
       I1 = qclab.qId(1,isSparse, d);
       % operation
       if strcmp(op, 'N') % normal
