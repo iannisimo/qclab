@@ -266,6 +266,10 @@ classdef CNOT < qclab.qgates.QControlledGate2
     function [bool] = fixed
       bool = true;
     end
+
+    function qd = isQudit
+      qd = true;
+    end
     
   end
   

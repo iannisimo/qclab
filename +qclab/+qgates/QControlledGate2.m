@@ -32,7 +32,7 @@ classdef QControlledGate2 < qclab.qgates.QGate2
       obj.controlState_ = controlState;
 
       assert( qclab.isNonNegInteger(control) );
-      assert((controlState == 0) || (controlState == 1)) ;
+      % assert((controlState == 0) || (controlState == 1)) ;
     end
 
     % qubit
@@ -54,22 +54,19 @@ classdef QControlledGate2 < qclab.qgates.QGate2
     end
 
     % matrix
-    function [mat] = matrix(obj)
-      E0 = [1 0; 0 0]; E1 = [0 0; 0 1];
-      I1 = qclab.qId(1);
-      CG = obj.gate.matrix;
-      if ( obj.controlState_ == 0 )
-        if (obj.control_ < obj.target)
-          mat = kron(E0, CG) + kron(E1, I1);
-        else
-          mat = kron(CG, E0) + kron(I1, E1);
-        end
+    function [mat] = matrix(obj, d)
+      if nargin <= 1, d = 2; end
+      isSparse = qclab.isSparse(obj.nbQubits);
+      c_ = zeros(1, d);
+      c_(obj.controlState_ + 1) = 1;
+      Ec = diag(c_);
+      En = diag(ones(1, d) - c_);
+      I1 = qclab.qId(1, isSparse, d);
+      CG = obj.gate.matrix(d);
+      if(obj.control_ < obj.target)
+        mat = kron(Ec, CG) + kron(En, I1);
       else
-        if (obj.control_ < obj.target)
-          mat = kron(E0, I1) + kron(E1, CG);
-        else
-          mat = kron(I1, E0) + kron(CG, E1);
-        end
+        mat = kron(CG, Ec) + kron(I1, En);
       end
     end
 
@@ -86,63 +83,58 @@ classdef QControlledGate2 < qclab.qgates.QGate2
     %> QControlledGate2 is applied
     %> @param offset offset applied to qubits
     % ==========================================================================
-    function [current] = apply(obj, side, op, nbQubits, current, offset)
-      if nargin == 5, offset = 0; end
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d)
+      if nargin <= 5, offset = 0; end
+      if nargin <= 6, d = 2; end
       isSparse = qclab.isSparse(nbQubits) ;
       assert( nbQubits >= 2 );
       if isa(current, 'double')
         if strcmp(side,'L') % left
-          assert( size(current,2) == 2^nbQubits);
+          assert( size(current,2) == d^nbQubits);
         else % right
-          assert( size(current,1) == 2^nbQubits);
+          assert( size(current,1) == d^nbQubits);
         end
       else
-        assert( length(current.states{1}) == 2^nbQubits )
+        assert( length(current.states{1}) == d^nbQubits )
       end
       qubits = obj.qubits + offset;
       assert( qubits(1) < nbQubits ); assert( qubits(2) < nbQubits );
       % nearest neighbor qubits
       if qubits(1) + 1 == qubits(2)
         current = apply@qclab.qgates.QGate2( obj, side, op, nbQubits, ...
-          current, offset );
+          current, offset, d);
         return
       end
-      E0 = qclab.E0(isSparse); E1 = qclab.E1(isSparse);
-      I1 = qclab.qId(1,isSparse);
+      c_ = zeros(1, d);
+      c_(obj.controlState_ + 1) = 1;
+      Ec = diag(c_);
+      En = diag(ones(1, d) - c_);
+      I1 = qclab.qId(1,isSparse, d);
       % operation
       if strcmp(op, 'N') % normal
-        mat1 = obj.gate.matrix;
+        mat1 = obj.gate.matrix(d);
       elseif strcmp(op, 'T') % transpose
-        mat1 = obj.gate.matrix.';
+        mat1 = obj.gate.matrix(d).';
       else % conjugate transpose
-        mat1 = obj.gate.matrix';
+        mat1 = obj.gate.matrix(d)';
       end
       % linear combination of Kronecker products
       s = qubits(2) - qubits(1) + 1;
-      Imid =  qclab.qId(s-2, isSparse);
-      if obj.controlState_ == 0
-        if (obj.control_ < obj.target)
-          mats = kron(kron(E0, Imid), mat1) + kron(kron(E1, Imid), I1) ;
-        else
-          mats = kron(kron(mat1, Imid), E0) + kron(kron(I1, Imid), E1) ;
-        end
+      Imid =  qclab.qId(s-2, isSparse, d);
+      if obj.control_ < obj.target
+        mats = kron(kron(Ec, Imid), mat1) + kron(kron(En, Imid), I1);
       else
-        if (obj.control_ < obj.target)
-          mats = kron(kron(E0, Imid), I1) + kron(kron(E1, Imid), mat1) ;
-        else
-          mats = kron(kron(I1, Imid), E0) + kron(kron(mat1, Imid), E1) ;
-        end
+        mats = kron(kron(mat1, Imid), Ec) + kron(kron(I1, Imid), En);
       end
-      % kron(Ileft, mats, Iright)
       if ( qubits(1) == 0 && qubits(2) == nbQubits - 1)
         matn = mats;
       elseif ( qubits(1) == 0 )
-        matn = kron(mats, qclab.qId(nbQubits - s, isSparse));
+        matn = kron(mats, qclab.qId(nbQubits - s, isSparse, d));
       elseif ( qubits(2) == nbQubits - 1 )
-        matn = kron(qclab.qId(nbQubits - s, isSparse), mats);
+        matn = kron(qclab.qId(nbQubits - s, isSparse, d), mats);
       else
-        matn = kron(kron(qclab.qId(qubits(1), isSparse),mats),...
-          qclab.qId(nbQubits - qubits(2) - 1, isSparse));
+        matn = kron(kron(qclab.qId(qubits(1), isSparse, d),mats),...
+          qclab.qId(nbQubits - qubits(2) - 1, isSparse, d));
       end
       % apply
       current = qclab.applyGateTo(current, matn, side ) ;
@@ -167,7 +159,7 @@ classdef QControlledGate2 < qclab.qgates.QGate2
 
     %> @brief Sets the control state of this controlled gate to `controlState`.
     function setControlState(obj, controlState)
-      assert( (controlState == 0) || (controlState == 1)) ;
+      % assert( (controlState == 0) || (controlState == 1)) ;
       obj.controlState_ = controlState ;
     end
 
