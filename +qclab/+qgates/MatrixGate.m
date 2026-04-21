@@ -294,9 +294,6 @@ classdef MatrixGate < qclab.QObject
 
 
   methods (Static)
-    function qd = isQudit
-      qd = true;
-    end
     % fixed
     function [bool] = fixed
       bool = true;
@@ -319,6 +316,9 @@ classdef MatrixGate < qclab.QObject
   end
 
    methods ( Access = protected )
+    function qd = isQudit(~)
+      qd = true;
+    end
      %> Property groups
     function groups = getPropertyGroups(obj)
      import matlab.mixin.util.PropertyGroup

@@ -14,6 +14,12 @@ classdef Barrier < qclab.QObject
     visibility_
   end
 
+  methods ( Access = protected )
+    function qd = isQudit(~)
+      qd = true;
+    end
+  end
+
   methods
     % Class constructor  =======================================================
     %> @brief
@@ -203,9 +209,6 @@ classdef Barrier < qclab.QObject
   end
 
   methods (Static)
-    function qd = isQudit
-      qd = true;
-    end
     % setQubit
     function setQubit(~, ~)
       assert( false );

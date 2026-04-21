@@ -59,12 +59,6 @@ classdef (Abstract) QObject < handle & ...
     end
   end
 
-  methods ( Static )
-    function qd = isQudit
-      qd = false;
-    end
-  end
-  
   methods (Static, Sealed, Access = protected)
     %> Default object to place in arrays of quantum objects
     function defaultQObject = getDefaultScalarElement
@@ -96,6 +90,10 @@ classdef (Abstract) QObject < handle & ...
     %> display Heterogeneous footer
     function footer = getFooter(obj)
          footer = getFooter@matlab.mixin.CustomDisplay(obj);
+    end
+
+    function qd = isQudit(~)
+      qd = false;
     end
   end
 

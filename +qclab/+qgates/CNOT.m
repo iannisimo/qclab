@@ -267,10 +267,6 @@ classdef CNOT < qclab.qgates.QControlledGate2
       bool = true;
     end
 
-    function qd = isQudit
-      qd = true;
-    end
-    
   end
   
   methods ( Access = protected )

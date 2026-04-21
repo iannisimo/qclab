@@ -38,10 +38,6 @@
 % ==============================================================================
 classdef PauliZ < qclab.qgates.QGate1
   methods (Static)
-    function qd = isQudit
-      qd = true;
-    end
-
     % fixed
     function [bool] = fixed
       bool = true;
@@ -79,4 +75,11 @@ classdef PauliZ < qclab.qgates.QGate1
       bool = isa(other, 'qclab.qgates.PauliZ');
     end
   end
+
+  methods ( Access = protected )
+    function qd = isQudit(~)
+      qd = true;
+    end
+  end
+
 end % PauliX

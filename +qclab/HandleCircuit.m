@@ -180,12 +180,11 @@ classdef HandleCircuit < qclab.QObject & qclab.QAdjustable
       cp.circuit_ = obj.circuit() ;
     end
 
-  end
-
-  methods ( Static )
-    function qd = isQudit
-      qd = true;
+    function qd = isQudit(~) 
+      % TODO find out how to handle this
+      qd = false;
     end
+
   end
 
 end %HandleCircuit

@@ -341,5 +341,9 @@ classdef QControlledGate2 < qclab.qgates.QGate2
       props.Target = obj.target;
       groups = PropertyGroup(props);
     end
+
+    function qd = isQudit(obj)
+      qd = obj.gate().isQudit;
+    end
   end
 end

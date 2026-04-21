@@ -566,5 +566,9 @@ classdef QMultiControlledGate < qclab.QObject
      
       groups = PropertyGroup(props);
     end
+
+    function qd = isQudit(obj)
+      qd = obj.gate().isQudit;
+    end
   end
 end

@@ -139,11 +139,12 @@ classdef HandleGate2 < qclab.qgates.QGate2
       cp.gate_ = obj.gate() ;
     end
 
+    % TODO if gate_ gets modofied after being added to a circuit,
+    % cannot check if it is qudit-ready
+    function qd = isQudit(obj)
+      qd = obj.gate_.isQudit;
+    end
+
   end
 
-  methods ( Static )
-    function qd = isQudit
-      qd = true;
-    end
-  end
 end %HandleGate2

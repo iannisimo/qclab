@@ -131,13 +131,13 @@ classdef HandleGate1 < qclab.qgates.QGate1
       cp = copyElement@matlab.mixin.Copyable( obj );
       cp.gate_ = obj.gate() ;
     end
-    
-  end
 
-  methods ( Static )
-    function qd = isQudit
-      qd = true;
+    % TODO if gate_ gets modofied after being added to a circuit,
+    % cannot check if it is qudit-ready
+    function qd = isQudit(obj)
+      qd = obj.gate_.isQudit;
     end
+    
   end
 
 end %HandleGate1
