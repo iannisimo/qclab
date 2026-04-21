@@ -54,8 +54,9 @@ classdef MatrixGate < qclab.QObject
     % Class constructor  =======================================================
     %> @brief Constructor for MatrixGate objects
     % ==========================================================================
-    function obj = MatrixGate(qubits, unitary, label)
-      if nargin < 3, label = 'U'; end
+    function obj = MatrixGate(qubits, unitary, label, d)
+      if nargin <= 2, label = 'U'; end
+      if nargin <= 3, d = 2; end
       % qubits must be consecutive non negative integers
       assert( all( diff(qubits) == 1 ), 'Qubits must be consecutive.' ) ;
       assert( qclab.isNonNegIntegerArray(qubits) )
@@ -64,9 +65,9 @@ classdef MatrixGate < qclab.QObject
       assert(rows == cols, 'Unitary matrix must be square.');
       % dimension of matrix must fit number of qubits
       nbQubits = length(qubits);
-      assert(rows == 2^nbQubits, sprintf( ...
-        'Size of unitary matrix must be 2^n × 2^n for n = %d qubits.', ...
-        nbQubits));
+      assert(rows == d^nbQubits, sprintf( ...
+        'Size of unitary matrix must be %d^n × %d^n for n = %d qubits.', ...
+        d, d, nbQubits));
       obj.qubits_ = qubits ;
       obj.unitary_ = unitary ;
       obj.label_ = label ;
@@ -96,7 +97,9 @@ classdef MatrixGate < qclab.QObject
     end
 
     % matrix
-    function [mat] = matrix(obj)
+    function [mat] = matrix(obj, d)
+      if nargin < 2, d = 2; end
+      assert(size(obj.unitary_) == d^obj.nbQubits)
       mat = obj.unitary_ ;
     end
 
@@ -128,39 +131,41 @@ classdef MatrixGate < qclab.QObject
     %> @param current matrix or struct of state vectors to which
     %> MatrixGate is applied
     %> @param offset offset applied to qubits
+    %> @param d number of energy levels
     % ==========================================================================
-    function [current] = apply(obj, side, op, nbQubits, current, offset)
-      if nargin == 5, offset = 0; end
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d)
+      if nargin <= 5, offset = 0; end
+      if nargin <= 6, d = 2; end
       isSparse = qclab.isSparse(nbQubits) ;
       if isa(current, 'double')
         if strcmp(side,'L') % left
-          assert( size(current,2) == 2^nbQubits);
+          assert( size(current,2) == d^nbQubits);
         else % right
-          assert( size(current,1) == 2^nbQubits);
+          assert( size(current,1) == d^nbQubits);
         end
       else
-        assert( length(current.states{1}) == 2^nbQubits )
+        assert( length(current.states{1}) == d^nbQubits )
       end
       qubits = obj.qubits + offset;
       assert( all(qubits < nbQubits));
       % operation
       if strcmp(op, 'N') % normal
-        matu = obj.matrix;
+        matu = obj.matrix(d);
       elseif strcmp(op, 'T') % transpose
-        matu = obj.matrix.';
+        matu = obj.matrix(d).';
       else % conjugate transpose
-        matu = obj.matrix';
+        matu = obj.matrix(d)';
       end
       % kron( Ileft, mat2, Iright)
       if (nbQubits == obj.nbQubits)
         matn = matu ;
       elseif ( qubits(1) == 0 )
-        matn = kron(matu, qclab.qId(nbQubits-obj.nbQubits, isSparse)) ;
+        matn = kron(matu, qclab.qId(nbQubits-obj.nbQubits, isSparse, d)) ;
       elseif ( qubits(obj.nbQubits) == nbQubits-1)
-        matn = kron(qclab.qId(nbQubits-obj.nbQubits, isSparse), matu);
+        matn = kron(qclab.qId(nbQubits-obj.nbQubits, isSparse, d), matu);
       else
-        matn = kron(kron(qclab.qId(qubits(1),isSparse), matu), ...
-          qclab.qId(nbQubits-qubits(obj.nbQubits)-1, isSparse)) ;
+        matn = kron(kron(qclab.qId(qubits(1),isSparse, d), matu), ...
+          qclab.qId(nbQubits-qubits(obj.nbQubits)-1, isSparse, d)) ;
       end
       current = qclab.applyGateTo( current, matn, side ) ;
     end
@@ -289,6 +294,9 @@ classdef MatrixGate < qclab.QObject
 
 
   methods (Static)
+    function qd = isQudit
+      qd = true;
+    end
     % fixed
     function [bool] = fixed
       bool = true;

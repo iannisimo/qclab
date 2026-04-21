@@ -151,15 +151,17 @@ classdef HandleCircuit < qclab.QObject & qclab.QAdjustable
     end
 
     % apply
-    function [current] = apply(obj, side, op, nbQubits, current, offset)
-      if nargin == 5, offset = 0; end
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d)
+      if nargin <= 5, offset = 0; end
+      if nargin <= 6, d = 2; end
       current = obj.circuit_.apply( side, op, nbQubits, current, ...
-                                    offset + obj.offset_ ) ;
+        offset + obj.offset_, d) ;
     end
 
-    % matrix 
-    function [mat] = matrix(obj)
-      mat = obj.circuit_.matrix ;
+    % matrix
+    function [mat] = matrix(obj, d)
+      if nargin <= 1, d = 2; end
+      mat = obj.circuit_.matrix(d) ;
     end
 
     % ctranspose
@@ -178,6 +180,12 @@ classdef HandleCircuit < qclab.QObject & qclab.QAdjustable
       cp.circuit_ = obj.circuit() ;
     end
 
+  end
+
+  methods ( Static )
+    function qd = isQudit
+      qd = true;
+    end
   end
 
 end %HandleCircuit

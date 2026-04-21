@@ -232,6 +232,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
     %> @param nbQubits qubit size of `current`
     %> @param current current state to which QCircuit is applied
     %> @param offset offset applied to qubit
+    %> @param d number of energy levels
     % ==========================================================================
     function [current] = apply(obj, side, op, nbQubits, current, offset, d )
       % apply - Apply the quantum circuit to an input vector or state.
@@ -750,8 +751,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       %   bool - True if the objects can be inserted, false otherwise.
       bool = true;
       for i = 1: length(objects)
-        % TODO check if objects(i) is compatible with qudits
-        if obj.d_ ~= 2 && ismethod(objects(i), 'matrix') && ~ismethod(objects(i), 'dmatrix')
+        if obj.d_ ~= 2 && ~objects(i).isQudit
           bool = false;
           return
         end

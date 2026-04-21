@@ -70,40 +70,42 @@ classdef QGate1 < qclab.QObject
     %> @param current matrix or struct of state vectors to which QGate1 is 
     %> applied
     %> @param offset offset applied to qubit
+    %> @param d number of energy levels
     % ==========================================================================
-    function [current] = apply(obj, side, op, nbQubits, current, offset)
-      if nargin == 5, offset = 0; end
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d)
+      if nargin <= 5, offset = 0; end
+      if nargin <= 6, d = 2; end
       assert( nbQubits >= 1);
       qubit = obj.qubit + offset ;
       assert( qubit < nbQubits ) ;
       isSparse = qclab.isSparse(nbQubits) ;
       if isa(current, 'double')
-          if strcmp(side,'L') % left
-            assert( size(current,2) == 2^nbQubits);
-          else % right
-            assert( size(current,1) == 2^nbQubits);
-          end
+        if strcmp(side,'L') % left
+          assert( size(current,2) == d^nbQubits);
+        else % right
+          assert( size(current,1) == d^nbQubits);
+        end
       else
-          assert( length(current.states{1}) == 2^nbQubits )
+        assert( length(current.states{1}) == d^nbQubits )
       end
       % operation
       if strcmp(op, 'N') % normal
-        mat1 = obj.matrix;
+        mat1 = obj.matrix(d);
       elseif strcmp(op, 'T') % transpose
-        mat1 = obj.matrix.';
+        mat1 = obj.matrix(d).';
       else % conjugate transpose
-        mat1 = obj.matrix';
+        mat1 = obj.matrix(d)';
       end
       % kron(Ileft, mat1, Iright)  
       if (nbQubits == 1)
         matn = mat1 ;
       elseif ( qubit == 0 )
-        matn = kron(mat1, qclab.qId(nbQubits-1, isSparse)) ;
+        matn = kron(mat1, qclab.qId(nbQubits-1, isSparse, d)) ;
       elseif ( qubit == nbQubits-1)
-        matn = kron(qclab.qId(nbQubits-1, isSparse), mat1);
+        matn = kron(qclab.qId(nbQubits-1, isSparse, d), mat1);
       else
-        matn = kron(kron(qclab.qId(qubit,isSparse), mat1), qclab.qId(...
-                    nbQubits-qubit-1,isSparse)) ;
+        matn = kron(kron(qclab.qId(qubit,isSparse, d), mat1), qclab.qId(...
+          nbQubits-qubit-1,isSparse, d)) ;
       end
       % side
       current = qclab.applyGateTo(current, matn, side ) ;

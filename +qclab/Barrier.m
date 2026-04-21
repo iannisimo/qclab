@@ -49,9 +49,10 @@ classdef Barrier < qclab.QObject
     end
 
     % matrix
-    function [mat] = matrix(obj)
+    function [mat] = matrix(obj, d)
+      if nargin == 1, d = 2; end
       isSparse = qclab.isSparse(obj.nbQubits);
-      mat = qclab.qId(obj.nbQubits,isSparse);
+      mat = qclab.qId(obj.nbQubits,isSparse, d);
     end
 
     % ==========================================================================
@@ -67,20 +68,23 @@ classdef Barrier < qclab.QObject
     %> @param current matrix or struct of state vectors to which
     %> QMultiControlledGate is applied
     %> @param offset offset applied to qubits
+    %> @param d number of energy levels
     % ==========================================================================
-    function [current] = apply(obj, side, op, nbQubits, current, offset)
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d)
+      if nargin <= 6, d = 2; end
       isSparse = qclab.isSparse(nbQubits) ;
       if isa(current, 'double')
         if strcmp(side,'L') % left
-          assert( size(current,2) == 2^nbQubits);
+          assert( size(current,2) == d^nbQubits);
         else % right
-          assert( size(current,1) == 2^nbQubits);
+          assert( size(current,1) == d^nbQubits);
         end
       else
-        assert( length(current.states{1}) == 2^nbQubits )
+        assert( length(current.states{1}) == d^nbQubits )
       end
-      matn = qclab.qId(nbQubits, isSparse);
+      matn = qclab.qId(nbQubits, isSparse, d);
       % apply
+      % TODO should we really apply the identity?
       current = qclab.applyGateTo( current, matn, side ) ;
     end
 
@@ -199,6 +203,9 @@ classdef Barrier < qclab.QObject
   end
 
   methods (Static)
+    function qd = isQudit
+      qd = true;
+    end
     % setQubit
     function setQubit(~, ~)
       assert( false );

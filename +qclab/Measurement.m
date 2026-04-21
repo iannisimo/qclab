@@ -263,27 +263,32 @@ classdef Measurement < qclab.QObject
       end
     end
 
-    function [current] = apply(obj, ~, ~, nbQubits, current, offset)
+    function [current] = apply(obj, ~, ~, nbQubits, current, offset, d)
       % apply - Apply the measurement to a state vector.
       %
       % Syntax:
       %   current = obj.apply(~, ~, nbQubits, current)
       %   current = obj.apply(~, ~, nbQubits, current, offset)
+      %   current = obj.apply(~, ~, nbQubits, current, offset, d)
       %
       % Inputs:
       %   nbQubits  - Number of qubits represented by the current state.
       %   current   - State to apply the measurement to. (array or struct)
       %   offset    - Offset applied to the qubit index (default: 0).
+      %   d         - number of energy levels (default: 2)
       %
       % Outputs:
       %   current - Updated struct containing measurement results,
       %             probabilities and collapsed state vectors
-      if nargin == 5, offset = 0; end
+      if nargin <= 5, offset = 0; end
+      if nargin <= 6, d = 2; end
       assert( nbQubits >= 1);
       qubit = obj.qubit + offset ;
       assert( qubit < nbQubits ) ;
       basisChange = obj.basisChange;
       tol = 1e-10;
+
+      % TODO add qudit measurement logic
 
       symb_0 = '0';
       symb_1 = '1';

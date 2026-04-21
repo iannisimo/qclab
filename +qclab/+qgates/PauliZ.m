@@ -38,14 +38,25 @@
 % ==============================================================================
 classdef PauliZ < qclab.qgates.QGate1
   methods (Static)
+    function qd = isQudit
+      qd = true;
+    end
+
     % fixed
     function [bool] = fixed
       bool = true;
     end
     
     % matrix
-    function [mat] = matrix
-      mat = [1 0; 0 -1];
+    function [mat] = matrix(d)
+      if nargin < 1
+        d = 2;
+      end
+      if d == 2
+        mat = [1 0; 0 -1];
+        return;
+      end
+      mat = diag(exp(2i * pi * (0:d-1) / d));
     end
     
     % label for draw and tex function

@@ -54,14 +54,16 @@ classdef HandleGate2 < qclab.qgates.QGate2
     end
     
     % matrix
-    function [mat] = matrix(obj)
-      mat = obj.gate_.matrix ;
+    function [mat] = matrix(obj, d)
+      if nargin <= 1, d = 2; end
+      mat = obj.gate_.matrix(d) ;
     end
     
     % apply
-    function [current] = apply(obj, side, op, nbQubits, current, offset)
-      if nargin == 5, offset = 0; end
-      current = obj.gate_.apply(side, op, nbQubits, current, obj.offset_ + offset);
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d)
+      if nargin <= 5, offset = 0; end
+      if nargin <= 6, d = 2; end
+      current = obj.gate_.apply(side, op, nbQubits, current, obj.offset_ + offset, d);
     end
     
     % toQASM
@@ -136,6 +138,12 @@ classdef HandleGate2 < qclab.qgates.QGate2
       cp = copyElement@matlab.mixin.Copyable( obj );
       cp.gate_ = obj.gate() ;
     end
-    
+
+  end
+
+  methods ( Static )
+    function qd = isQudit
+      qd = true;
+    end
   end
 end %HandleGate2

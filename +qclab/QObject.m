@@ -58,6 +58,12 @@ classdef (Abstract) QObject < handle & ...
       bool = ~obj.equals(other);
     end
   end
+
+  methods ( Static )
+    function qd = isQudit
+      qd = false;
+    end
+  end
   
   methods (Static, Sealed, Access = protected)
     %> Default object to place in arrays of quantum objects

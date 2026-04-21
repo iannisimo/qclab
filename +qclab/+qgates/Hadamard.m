@@ -38,16 +38,25 @@
 % ==============================================================================
 classdef Hadamard < qclab.qgates.QGate1
   methods (Static)
+    function qd = isQudit
+      qd = true;
+    end
     % fixed
     function [bool] = fixed
       bool = true;
     end
     
     % matrix
-    function [mat] = matrix
-      sqrt2 = 1/sqrt(2);
-      mat = [sqrt2, sqrt2; 
-             sqrt2, -sqrt2];
+    function [mat] = matrix(d)
+      if nargin == 1, d = 2; end
+      sqrtd = 1/sqrt(d);
+      if d == 2
+        mat = [sqrtd, sqrtd;
+          sqrtd, -sqrtd];
+        return
+      end
+      n = 0:d-1;
+      mat = sqrtd * exp(2i * pi * (n' * n) / d);
     end
     
     % label for draw and tex function

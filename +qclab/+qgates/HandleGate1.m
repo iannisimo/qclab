@@ -54,8 +54,9 @@ classdef HandleGate1 < qclab.qgates.QGate1
     end
     
     % matrix
-    function [mat] = matrix(obj)
-      mat = obj.gate_.matrix ;
+    function [mat] = matrix(obj, d)
+      if nargin <= 1, d = 2; end
+      mat = obj.gate_.matrix(d) ;
     end
     
     % toQASM
@@ -132,5 +133,11 @@ classdef HandleGate1 < qclab.qgates.QGate1
     end
     
   end
-  
+
+  methods ( Static )
+    function qd = isQudit
+      qd = true;
+    end
+  end
+
 end %HandleGate1
