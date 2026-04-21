@@ -53,6 +53,7 @@ classdef QMultiControlledGate < qclab.QObject
       nbQubits = int64(length(obj.controls_) + length(obj.targets)) ;
     end
 
+    % TODO not the same as before, matbe revert and QUDITify
     % matrix
     function [mat] = matrix(obj, d)
       if nargin <= 1, d = 2; end
@@ -61,7 +62,7 @@ classdef QMultiControlledGate < qclab.QObject
       targets = obj.targets;
       minq = min([controls(1), targets]);
       maxq = max([controls(end), targets]);
-      nbQubits = maxq - minq + 1
+      nbQubits = maxq - minq + 1;
       I = qclab.qId(nbQubits, isSparse, d);
       mat = obj.apply('L', 'N', nbQubits, I, 0, d);
     end
