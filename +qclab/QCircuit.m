@@ -165,11 +165,12 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       issparse = qclab.isSparse(obj.nbQubits_);
       mat = qclab.qId(obj.nbQubits, issparse, obj.d_);
       for i = 1:length(obj.objects_)
-        mat = apply(obj.objects_(i), 'R', 'N', obj.nbQubits, mat) ;
+        mat = apply(obj.objects_(i), 'R', 'N', obj.nbQubits, mat, obj.d_) ;
       end
     end
 
     % simulate
+    % TODO
     function [simulation] = simulate(obj, v, seed)
       % simulate - Simulate the quantum circuit on a given input state. If
       % the circuit does not contain measurements, it is assumed that all
@@ -198,7 +199,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       nbQubits = obj.nbQubits_;
       assert(size(v,1) == obj.d_^nbQubits);
       for i = 1:length(obj.objects_)
-        v = apply(obj.objects_(i), 'R', 'N', nbQubits, v);
+        v = apply(obj.objects_(i), 'R', 'N', nbQubits, v, obj.d_);
       end
       % no measurements
       if isa(v,"double")
