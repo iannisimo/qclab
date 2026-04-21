@@ -33,13 +33,6 @@ classdef QMultiControlledGate < qclab.QObject
       if nargin < 2, controlStates = ones(size(controls)); end
       assert( length(controls) == length(unique(controls)) );
       assert( length(controls) == length(controlStates) ) ;
-      unique_States = sort(unique(controlStates)) ;
-      assert(length(unique_States) == 1 || length(unique_States) == 2) ;
-      if length(unique_States) == 1
-        assert( unique_States == 0 || unique_States == 1 ) ;
-      else
-        assert( unique_States(1) == 0 && unique_States(2) == 1 ) ;
-      end
 
       [obj.controls_,sortIdx] = sort(controls) ;
       obj.controlStates_ = controlStates(sortIdx) ;
@@ -61,52 +54,16 @@ classdef QMultiControlledGate < qclab.QObject
     end
 
     % matrix
-    function [mat] = matrix(obj)
-      isSparse = qclab.isSparse(obj.nbQubits) ;
-      E0 = qclab.E0(isSparse); E1 = qclab.E1(isSparse);
-      Itarget = qclab.qId(obj.gate.nbQubits, isSparse); gate_mat = obj.gate.matrix;
-      target_idx = find(obj.controls_ > max(obj.targets), 1);
-      if isempty(target_idx)
-        target_idx = length(obj.controls_) + 1;
-      end
-      Cup = 1;
-      for i = 1:target_idx-1
-        if obj.controlStates_(i) == 0
-          Cup = kron(Cup, E0);
-        else
-          Cup = kron(Cup, E1);
-        end
-      end
-      Cdown = 1;
-      for i = target_idx:length(obj.controls_)
-        if obj.controlStates_(i) == 0
-          Cdown = kron(Cdown, E0);
-        else
-          Cdown = kron(Cdown, E1);
-        end
-      end
-      if size(Cup,1) > 1
-        ICup = eye(size(Cup)) - Cup;
-      else
-        ICup = 1;
-      end
-      if size(Cdown,1) > 1
-        ICdown = eye(size(Cdown)) - Cdown;
-      else
-        ICdown = 1;
-      end
-      if size(Cup,1) == 1
-        mat = kron(gate_mat,Cdown) + ...
-          kron(Itarget,ICdown) ;
-      elseif size(Cdown,1) == 1
-        mat = kron(Cup,gate_mat) + ...
-          kron(ICup,Itarget) ;
-      else
-        mat = kron(kron(Cup,gate_mat),Cdown) + ...
-          kron(kron(Cup,Itarget),ICdown) + ...
-          kron(kron(ICup,Itarget),Cdown) + ...
-          kron(kron(ICup,Itarget),ICdown) ;
-      end
+    function [mat] = matrix(obj, d)
+      if nargin <= 1, d = 2; end
+      isSparse = qclab.isSparse(obj.nbQubits);
+      controls = obj.controls;
+      targets = obj.targets;
+      minq = min([controls(1), targets]);
+      maxq = max([controls(end), targets]);
+      nbQubits = maxq - minq + 1
+      I = qclab.qId(nbQubits, isSparse, d);
+      mat = obj.apply('L', 'N', nbQubits, I, 0, d);
     end
 
     % ==========================================================================
@@ -123,8 +80,9 @@ classdef QMultiControlledGate < qclab.QObject
     %> QMultiControlledGate is applied
     %> @param offset offset applied to qubits
     % ==========================================================================
-    function [current] = apply(obj, side, op, nbQubits, current, offset)
-      if nargin == 5, offset = 0; end
+    function [current] = apply(obj, side, op, nbQubits, current, offset, d)
+      if nargin <= 5, offset = 0; end
+      if nargin <= 6, d = 2; end
       isSparse = qclab.isSparse(nbQubits) ;
       controls = obj.controls + offset ;
       targets = obj.targets + offset ;
@@ -135,23 +93,22 @@ classdef QMultiControlledGate < qclab.QObject
       assert( nbQubits > maxq );
       if isa(current, 'double')
         if strcmp(side,'L') % left
-          assert( size(current,2) == 2^nbQubits);
+          assert( size(current,2) == d^nbQubits);
         else % right
-          assert( size(current,1) == 2^nbQubits);
+          assert( size(current,1) == d^nbQubits);
         end
       else
-        assert( length(current.states{1}) == 2^nbQubits )
+        assert( length(current.states{1}) == d^nbQubits )
       end
-      E0 = qclab.E0(isSparse); E1 = qclab.E1(isSparse);
-      I1 = qclab.qId(1,isSparse);
-      Itarget = qclab.qId(obj.gate.nbQubits,isSparse);
+      I1 = qclab.qId(1,isSparse, d);
+      Itarget = qclab.qId(obj.gate.nbQubits,isSparse, d);
       % operation
       if strcmp(op, 'N') % normal
-        mat = obj.gate.matrix;
+        mat = obj.gate.matrix(d);
       elseif strcmp(op, 'T') % transpose
-        mat = obj.gate.matrix.';
+        mat = obj.gate.matrix(d).';
       else % conjugate transpose
-        mat = obj.gate.matrix';
+        mat = obj.gate.matrix(d)';
       end
       target_idx = find(controls > targetEnd, 1);
       if isempty(target_idx)
@@ -164,36 +121,38 @@ classdef QMultiControlledGate < qclab.QObject
       if target_idx > 1
         for i = controls(1):controls(target_idx-1)
           if i == controls(c_idx)
-            if obj.controlStates_(c_idx) == 0
-              Cup = kron(Cup, E0);
-            else
-              Cup = kron(Cup, E1);
-            end
+            Ec = diag(0:d-1 == obj.controlStates_(c_idx));
+            Cup = kron(Cup, Ec);
             c_idx = c_idx + 1 ;
           else
             Cup = kron(Cup, I1);
           end
         end
-        ICup = qclab.qId(log2(size(Cup,1)),isSparse) - Cup;
-        Sup = qclab.qId(targetStart - controls(target_idx-1) - 1,isSparse) ;
+        if isSparse
+          ICup = speye(size(Cup, 1)) - Cup;
+        else
+          ICup = eye(size(Cup, 1)) - Cup;
+        end
+        Sup = qclab.qId(targetStart - controls(target_idx-1) - 1,isSparse, d) ;
       end
       % (I)Controls down
       Cdown = 1; ICdown = 1; Sdown = 1;
       if target_idx <= length(controls)
         for i = controls(target_idx):controls(end)
           if i == controls(c_idx)
-            if obj.controlStates_(c_idx) == 0
-              Cdown = kron(Cdown, E0);
-            else
-              Cdown = kron(Cdown, E1);
-            end
+            Ec = diag(0:d-1 == obj.controlStates_(c_idx));
+            Cdown = kron(Cdown, Ec);
             c_idx = c_idx + 1 ;
           else
             Cdown = kron(Cdown, I1);
           end
         end
-        ICdown = qclab.qId(log2(size(Cdown,1)),isSparse) - Cdown;
-        Sdown = qclab.qId(controls(target_idx) - targetEnd - 1,isSparse);
+        if isSparse
+          ICdown = speye(size(Cdown, 1)) - Cdown;
+        else
+          ICdown = eye(size(Cdown, 1)) - Cdown;
+        end
+        Sdown = qclab.qId(controls(target_idx) - targetEnd - 1,isSparse, d);
       end
       if size(Cup,1) == 1
         mats = kron(mat,kron(Sdown,Cdown)) + ...
@@ -207,17 +166,17 @@ classdef QMultiControlledGate < qclab.QObject
           kron(ICup,kron(Sup,kron(Itarget,kron(Sdown,Cdown)))) + ...
           kron(ICup,kron(Sup,kron(Itarget,kron(Sdown,ICdown)))) ;
       end
-      s = log2(size(mats,1));
+      s = maxq - minq + 1;
 
       if ( minq == 0 && maxq == nbQubits - 1)
         matn = mats ;
       elseif minq == 0
-        matn = kron(mats, qclab.qId(nbQubits - s,isSparse));
+        matn = kron(mats, qclab.qId(nbQubits - s,isSparse, d));
       elseif maxq == nbQubits - 1
-        matn = kron(qclab.qId(nbQubits - s,isSparse), mats);
+        matn = kron(qclab.qId(nbQubits - s,isSparse, d), mats);
       else
-        matn = kron(qclab.qId(minq, isSparse), kron(mats, ...
-          qclab.qId(nbQubits - maxq - 1,isSparse))) ;
+        matn = kron(qclab.qId(minq, isSparse, d), kron(mats, ...
+          qclab.qId(nbQubits - maxq - 1,isSparse, d))) ;
       end
       % apply
       current = qclab.applyGateTo( current, matn, side ) ;

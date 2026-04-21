@@ -339,6 +339,10 @@ classdef MCX < qclab.qgates.QMultiControlledGate
   end
   
   methods (Static)
+
+    function qd = isQudit
+      qd = true;
+    end
     
     function [bool] = fixed
       bool = true;
