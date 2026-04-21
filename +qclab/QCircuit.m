@@ -78,7 +78,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
     %> Number of measurement in the circuit.
     nbMeasurements_(1,1) int64
     %> Number of available energy levels
-    d_ uint8 = 2
+    d_ int64 = 2
   end
 
   methods
@@ -165,12 +165,11 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       issparse = qclab.isSparse(obj.nbQubits_);
       mat = qclab.qId(obj.nbQubits, issparse, obj.d_);
       for i = 1:length(obj.objects_)
-        mat = apply(obj.objects_(i), 'R', 'N', obj.nbQubits, mat, obj.d_) ;
+        mat = apply(obj.objects_(i), 'R', 'N', obj.nbQubits, mat, 0, obj.d_) ;
       end
     end
 
     % simulate
-    % TODO
     function [simulation] = simulate(obj, v, seed)
       % simulate - Simulate the quantum circuit on a given input state. If
       % the circuit does not contain measurements, it is assumed that all
@@ -193,13 +192,13 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       end
       if isa(v, 'char')
         i = base2dec(v, double(obj.d_));
-        v = zeros(d^strlength(v), 1);
+        v = zeros(obj.d_^strlength(v), 1);
         v(i+1) = 1;
       end
       nbQubits = obj.nbQubits_;
       assert(size(v,1) == obj.d_^nbQubits);
       for i = 1:length(obj.objects_)
-        v = apply(obj.objects_(i), 'R', 'N', nbQubits, v, obj.d_);
+        v = apply(obj.objects_(i), 'R', 'N', nbQubits, v, 0, obj.d_);
       end
       % no measurements
       if isa(v,"double")
