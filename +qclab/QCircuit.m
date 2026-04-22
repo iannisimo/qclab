@@ -78,7 +78,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
     %> Number of measurement in the circuit.
     nbMeasurements_(1,1) int64
     %> Number of available energy levels
-    d_ int64 = 2
+    d_ double = 2
   end
 
   methods
