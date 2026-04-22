@@ -48,15 +48,16 @@ classdef MatrixGate < qclab.QObject
     unitary_ double
     %> label of this multi-qubit gate
     label_ char
+    %> number of energy levels
+    d_ double
   end
 
   methods
     % Class constructor  =======================================================
     %> @brief Constructor for MatrixGate objects
     % ==========================================================================
-    function obj = MatrixGate(qubits, unitary, label, d)
+    function obj = MatrixGate(qubits, unitary, label)
       if nargin <= 2, label = 'U'; end
-      if nargin <= 3, d = 2; end
       % qubits must be consecutive non negative integers
       assert( all( diff(qubits) == 1 ), 'Qubits must be consecutive.' ) ;
       assert( qclab.isNonNegIntegerArray(qubits) )
@@ -65,11 +66,13 @@ classdef MatrixGate < qclab.QObject
       assert(rows == cols, 'Unitary matrix must be square.');
       % dimension of matrix must fit number of qubits
       nbQubits = length(qubits);
+      d = nthroot(rows, nbQubits);
       assert(rows == d^nbQubits, sprintf( ...
         'Size of unitary matrix must be %d^n × %d^n for n = %d qubits.', ...
         d, d, nbQubits));
       obj.qubits_ = qubits ;
       obj.unitary_ = unitary ;
+      obj.d_ = d ;
       obj.label_ = label ;
     end
 
@@ -99,7 +102,7 @@ classdef MatrixGate < qclab.QObject
     % matrix
     function [mat] = matrix(obj, d)
       if nargin < 2, d = 2; end
-      assert(size(obj.unitary_) == d^obj.nbQubits)
+      assert(d == obj.d_, sprintf('This gate was defined for d = %d', obj.d_));
       mat = obj.unitary_ ;
     end
 
@@ -325,7 +328,7 @@ classdef MatrixGate < qclab.QObject
      props = struct();
      props.nbQubits = obj.nbQubits;  
      props.Qubits = obj.qubits;
-     props.Unitary = obj.matrix;
+     props.Unitary = obj.matrix(obj.d_);
      groups = PropertyGroup(props);
     end
    end 
