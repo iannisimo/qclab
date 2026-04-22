@@ -44,8 +44,15 @@ classdef PauliY < qclab.qgates.QGate1
     end
     
     % matrix
-    function [mat] = matrix
-      mat = [0 -1i; 1i 0];
+    function [mat] = matrix(d)
+      if nargin <= 0, d = 2; end
+      if d == 2
+        mat = [0 -1i; 1i 0];
+      else
+        X_ = qclab.qgates.PauliX.matrix(d);
+        Z_ = qclab.qgates.PauliZ.matrix(d);
+        mat = 1i * X_ * Z_;
+      end
     end
     
     % label for draw and tex function
@@ -66,6 +73,12 @@ classdef PauliY < qclab.qgates.QGate1
     % equals
     function [bool] = equals(~,other)
       bool = isa(other, 'qclab.qgates.PauliY');
+    end
+  end
+
+  methods ( Access = protected )
+    function qd = isQudit(~)
+      qd = true;
     end
   end
 end % PauliY
