@@ -19,6 +19,7 @@ classdef MVCG < qclab.qgates.QGate2
       assert(isa(gates, 'qclab.qgates.QGate1'));
       obj.control_ = control;
       obj.target_ = target;
+      % TODO handle @gates
       obj.gates_ = copy(gates);
       arrayfun(@(g) g.setQubits(0), obj.gates_);
     end
