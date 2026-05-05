@@ -2,7 +2,7 @@ classdef ControlledGate < qclab.qgates.QControlledGate2
   
   properties (Access = protected)
     %> Property storing the 1-qubit gate of this 2-qubit controlled gate.
-    gate_ qclab.qgates.QGate1
+    gate_ qclab.QObject
   end
   
   methods
@@ -15,6 +15,10 @@ classdef ControlledGate < qclab.qgates.QControlledGate2
       obj@qclab.qgates.QControlledGate2(control, controlState );
 
       if isa(gate, 'qclab.qgates.QGate1')
+        obj.gate_ = copy(gate);
+        obj.gate_.setQubits(target);
+      elseif isa(gate, 'qclab.QObject')
+        assert(gate.nbQubits == 1);
         obj.gate_ = copy(gate);
         obj.gate_.setQubits(target);
       else

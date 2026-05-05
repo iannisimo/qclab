@@ -175,7 +175,7 @@ classdef MatrixGate < qclab.QObject
 
     % ctranspose
     function objprime = ctranspose( obj )
-      unitary = obj.matrix ;
+      unitary = obj.matrix(obj.d_) ;
       objprime = qclab.qgates.MatrixGate( obj.qubits, unitary', obj.label_ );
     end
 
