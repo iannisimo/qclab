@@ -61,9 +61,12 @@ classdef ControlledGate < qclab.qgates.QControlledGate2
       assert( target ~= obj.control() ) ;
       obj.gate_.setQubit( target );
     end
-    
-    function [varargout] = draw(obj, fid, parameter, offset)
-      assert(false, 'TODO: unimplemented');
+    %
+    % label for draw and tex function
+    function [label] = label(obj, parameter, tex )
+      if nargin < 2, parameter = 'N'; end
+      if nargin < 3, tex = false; end
+      label = obj.gate_.label( parameter, tex );
     end
     
     function [out] =  toTex(obj, fid, parameter, offset)
