@@ -1,10 +1,9 @@
 % https://link.aps.org/doi/10.1103/PhysRevLett.94.230502
 
+IMAG = 1;
 
-IMAG = 0;
-
-d = 2;
-n = 2;
+d = 3;
+n = 3;
 
 psi = randn(d^n, 1) + IMAG * 1i * randn(d^n, 1);
 psi = psi / norm(psi);
@@ -26,7 +25,7 @@ function seq = makeClubSequence(d, n)
   seq = [seq, string(repmat('-', 1, n))];
 end
 
-function [ctrl, ctrlVal, targ, V] = singleClubHouseholder(term, psi_j, d);
+function [ctrl, ctrlVal, targ, V] = singleClubHouseholder(term, psi_j, d)
   term = char(term);
   ctrl = -1;
   ctrlVal = 0;
@@ -61,17 +60,24 @@ for term = seq
     fVGate = VGate;
     bVGate = VGate.ctranspose();
   else
-    fVGate = qclab.qgates.ControlledGate(VGate, c-1, t-1, str2num(cv));
-    bVGate = qclab.qgates.ControlledGate(VGate.ctranspose(), c-1, t-1, str2num(cv));
+    fVGate = qclab.qgates.ControlledGate(VGate, c-1, t-1, str2double(cv));
+    bVGate = qclab.qgates.ControlledGate(VGate.ctranspose(), c-1, t-1, str2double(cv));
   end
   psi_ = fVGate.apply('R', 'N', n, psi_, 0, d);
   cir.push_back(bVGate);
 end
 
-%> TODO add phase gate at the end/start
+PsiPhase = psi_(1,1);
 
-psi
-psi_
-res = cir.ctranspose().simulate(repmat('0', 1, n)).states
+phase = qclab.qgates.Phase(n-1, real(PsiPhase), imag(PsiPhase));
+dPhase = qclab.qgates.qudit.SubspaceGate(phase, [1, 0], n-1);
 
-sum(res - psi)
+cir.push_back(dPhase);
+
+res = cir.ctranspose().simulate(repmat('0', 1, n)).states;
+
+cir.ctranspose().draw();
+
+if sum(res - psi) < exp(-6)
+  fprintf('The circuit prepares state psi\n');
+end
