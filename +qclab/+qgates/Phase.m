@@ -139,9 +139,18 @@ classdef Phase < qclab.qgates.QGate1 & qclab.QAdjustable
     end
     
     % matrix
-    function [mat] = matrix(obj)
-      mat = [1, 0;
-             0, obj.cos + 1i *obj.sin ];
+    function [mat] = matrix(obj, d)
+      if nargin <= 1, d = 2; end
+      p = obj.cos + 1i * obj.sin;
+      if d == 2
+        mat = [1, 0;
+               0, p];
+      else 
+        % TODO isSparse dependant on d
+        isSparse = false;
+        mat = qclab.qId(1, isSparse, d);
+        mat(d, d) = p;
+      end
     end
     
     % toQASM
@@ -235,6 +244,11 @@ classdef Phase < qclab.qgates.QGate1 & qclab.QAdjustable
       cp = copyElement@matlab.mixin.Copyable( obj );
       cp.angle_ = obj.angle() ;
     end
-    
+
+    function qd = isQudit(~)
+      qd = true;
+    end
+
   end
+
 end % Phase
