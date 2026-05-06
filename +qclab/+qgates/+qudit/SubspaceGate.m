@@ -52,27 +52,32 @@ classdef SubspaceGate < qclab.qgates.QGate1
       assert(false, 'Unsupported');
     end
 
-    
+    function [label] = label(obj, parameter, tex )
+      super_label = obj.gate_.label();
 
+      if max(abs(diff(obj.subspace_))) <= 1
+        sub = char([obj.subspace_(1) + 0x2080, 0x208B, obj.subspace_(end) + 0x2080]);
+      else
+        sub = char(0x208B);
+      end
+      label = [super_label, sub];
+    end
 
-    
-
-    
   end
 
   methods (Access = protected)
     function qd = isQudit(obj)
-      qd = all(arrayfun(@(g) g.isQudit(), obj.gates_));
+      if length(obj.subspace_) == 2
+        qd = true;
+      else
+        qd = obj.gate_.isQudit();
+      end
     end
   end
 
   methods (Static)
     function [bool] = fixed
       bool = true;
-    end
-
-    function [label] = label(obj, parameter, tex )
-      label = 'X';
     end
   end
 
