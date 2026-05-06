@@ -52,6 +52,9 @@ seq = makeClubSequence(d, n);
 
 cir = qclab.QCircuit(n, 0, d);
 
+onedgates = 1;
+twodgates = 0;
+
 psi_ = psi;
 for term = seq
   [c, cv, t, V] = singleClubHouseholder(term, psi_, d);
@@ -59,9 +62,11 @@ for term = seq
   if c == -1
     fVGate = VGate;
     bVGate = VGate.ctranspose();
+    onedgates = onedgates + 1;
   else
     fVGate = qclab.qgates.ControlledGate(VGate, c-1, t-1, str2double(cv));
     bVGate = qclab.qgates.ControlledGate(VGate.ctranspose(), c-1, t-1, str2double(cv));
+    twodgates = twodgates + 1;
   end
   psi_ = fVGate.apply('R', 'N', n, psi_, 0, d);
   cir.push_back(bVGate);
@@ -79,5 +84,5 @@ res = cir.ctranspose().simulate(repmat('0', 1, n)).states;
 cir.ctranspose().draw();
 
 if sum(res - psi) < exp(-6)
-  fprintf('The circuit prepares state psi\n');
+  fprintf('The circuit prepares state psi with %d one and %d two qudit gates\n', onedgates, twodgates);
 end
