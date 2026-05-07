@@ -20,6 +20,11 @@ classdef INC < qclab.qgates.QGate1 & qclab.QAdjustable
       mat = circshift(mat, obj.sumval_);
     end
 
+    function update(obj, sumval)
+      assert( ~obj.fixed );
+      obj.sumval_ = sumval;
+    end
+
     function [bool] = equals(obj, other)
       bool = isa(other, 'qclab.qgates.qudit.INC') && (obj.sumval_ == other.sumval_);
     end
