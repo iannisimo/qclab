@@ -5,10 +5,12 @@ classdef INC < qclab.qgates.QGate1 & qclab.QAdjustable
   
   methods
 
-    function obj = INC( qubit, sumval )
-      if nargin <= 1, qubit = 0; end
-      if nargin <= 2, val = 1; end
+    function obj = INC( qubit, sumval, fixed )
+      if nargin <= 0, qubit = 0; end
+      if nargin <= 1, sumval = 1; end
+      if nargin <= 2, fixed = false; end
       obj@qclab.qgates.QGate1(qubit);
+      obj@qclab.QAdjustable(fixed); 
       obj.sumval_ = sumval;
     end
 
@@ -47,12 +49,6 @@ classdef INC < qclab.qgates.QGate1 & qclab.QAdjustable
   methods (Access = protected)
     function qd = isQudit(~)
       qd = true;
-    end
-  end
-
-  methods (Static)
-    function [bool] = fixed
-      bool = true;
     end
   end
 
