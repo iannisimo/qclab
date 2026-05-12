@@ -1,9 +1,9 @@
 % https://link.aps.org/doi/10.1103/PhysRevLett.94.230502
 
-IMAG = 0;
+IMAG = 1;
 
 d = 3;
-n = 2;
+n = 3;
 
 U = randn(d^n) + IMAG * 1i * randn(d^n);
 [U, ~] = qr(U);
@@ -49,10 +49,10 @@ function [ctrl, ctrlVal, targ, V] = singleClubHouseholder(term, psi_j, d)
 end
 
 function vec = dec2base_(val, d, n)
-  vec(n,1) = 0;
+  vec(n) = 0;
   for i = 0:n-1
     i_ = d^i;
-    vec(end-i, 1) = mod(floor(val / i_), d);
+    vec(end-i) = mod(floor(val / i_), d);
   end
 end
 
@@ -146,7 +146,6 @@ function circuit = triangle(U, d, n)
   subcircuit = triangle(U(1:d^(n-1),1:d^(n-1)), d, n-1);
   cir = addControls(subcircuit, [], [], d, n);
   U = cir.apply('R', 'N', n, U, 0, d);
-  % circuit.push_back(cir);
   for g = cir.objects
     circuit.push_back(g);
   end
@@ -158,17 +157,14 @@ function circuit = triangle(U, d, n)
       for l = (k+1):d-1 % Block-row
         r_s = floor(b_size * l); % first row of block
         r_e = floor(b_size * (l+1) - 1); % last row of block
-        fprintf('k=%d, j=%d, l=%d\n', k, j, l);
         j_ = dec2base_(j, d, n);
         j_(1) = mod(k+l, d);
         nz = base2dec_(j_, d, n);
         subcircuit = ClubHouseholder(U(r_s+1:r_e+1, j+1), nz, d, n-1);
         controls = 0;
-        % controlStates = mod(k+l, d);
         controlStates = mod(l, d);
         cir = addControls(subcircuit, controls, controlStates, d, n);
         U = cir.apply('R', 'N', n, U, 0, d);
-        % circuit.push_back(cir);
         for g = cir.objects
           circuit.push_back(g);
         end
@@ -178,8 +174,8 @@ function circuit = triangle(U, d, n)
       controls = (1:n-1);
       controlStates = dec2base_(j, d, n);
       controlStates = controlStates(2:end);
-      phi = U(j+1:d:d^n, j+1);
-      HR = eye(d^(n-1));
+      phi = U(j+1:d^(n-1):d^n, j+1);
+      HR = eye(d);
       HR(k+1:end, k+1:end) = makeHouseholder(phi);
       gate = qclab.qgates.MatrixGate(0, HR);
       if isscalar(controls)
@@ -188,7 +184,6 @@ function circuit = triangle(U, d, n)
         cir.push_back(qclab.qgates.MControlledGate(gate, controls, 0, controlStates));
       end
       U = cir.apply('R', 'N', n, U, 0, d);
-      % circuit.push_back(cir);
       for g = cir.objects
         circuit.push_back(g);
       end
@@ -196,7 +191,6 @@ function circuit = triangle(U, d, n)
     subcircuit = triangle(U(b_size * (k+1) + 1:b_size * (k+2), b_size * (k+1) + 1:b_size * (k+2)), d, n-1);
     cir = addControls(subcircuit, 0, k+1, d, n);
     U = cir.apply('R', 'N', n, U, 0, d);
-    % circuit.push_back(cir);
     for g = cir.objects
       circuit.push_back(g);
     end
@@ -206,6 +200,5 @@ function circuit = triangle(U, d, n)
 end
 
 cir = triangle(U, d, n);
-cir.apply('R', 'N', n, U, 0, d)
-
-% cir = ClubHouseholder(U(:, 1), 3, d, n)
+res = cir.apply('R', 'N', n, U, 0, d);
+norm(abs(res) - eye(size(res)))
