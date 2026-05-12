@@ -73,11 +73,6 @@ classdef ControlledGate < qclab.qgates.QControlledGate2
       label = obj.gate_.label( parameter, tex );
     end
     
-    function [out] =  toTex(obj, fid, parameter, offset)
-      assert(false, 'TODO: unimplemented');
-    end
-    
-    
   end
   
   methods (Static)
