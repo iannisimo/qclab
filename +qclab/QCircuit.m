@@ -1511,5 +1511,9 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       props.offset = obj.offset;
       groups = PropertyGroup(props);
     end
+
+    function qd = isQudit(obj)
+      qd = obj.d_ > 2;
+    end
   end
 end % class QCircuit
