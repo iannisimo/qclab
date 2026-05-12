@@ -202,3 +202,5 @@ end
 cir = triangle(U, d, n);
 res = cir.apply('R', 'N', n, U, 0, d);
 norm(abs(res) - eye(size(res)))
+
+% TODO missing global phases
