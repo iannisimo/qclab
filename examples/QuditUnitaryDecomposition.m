@@ -134,15 +134,18 @@ end
 function circuit = triangle(U, d, n)
   circuit = qclab.QCircuit(n, 0, d);
   if n == 1
+    % Triangularize U using a QR reduction.
     for i = 0:d-2
-      HS = eye(d);
+      HR = eye(d);
       phi = U(i+1:end, i+1);
-      HS(i+1:end, i+1:end) = makeHouseholder(phi);
-      U = HS * U;
-      circuit.push_back(qclab.qgates.MatrixGate(0, HS));
+      HR(i+1:end, i+1:end) = makeHouseholder(phi);
+      U = HR * U;
+      circuit.push_back(qclab.qgates.MatrixGate(0, HR));
     end
     return
   end
+  % Reduce top-left dn−1 × dn−1 subblock using Triangle(∗, d, n − 1),
+  % (writing output to bottom n − 1 circuit lines)
   subcircuit = triangle(U(1:d^(n-1),1:d^(n-1)), d, n-1);
   cir = addControls(subcircuit, [], [], d, n);
   U = cir.apply('R', 'N', n, U, 0, d);
@@ -160,6 +163,9 @@ function circuit = triangle(U, d, n)
         j_ = dec2base_(j, d, n);
         j_(1) = mod(k+l, d);
         nz = base2dec_(j_, d, n);
+        % Use ♣Householder to zero the column entries (k + l)dn−1, ... , [(k + l + 1)dn−1 − 1],
+        % leaving a nonzero entry at (k + l)c2 . . . cn for j = c1c2 . . . cn and
+        % adding |k + l〉- control on the most significant qudit.
         subcircuit = ClubHouseholder(U(r_s+1:r_e+1, j+1), nz, d, n-1);
         controls = 0;
         controlStates = mod(l, d);
@@ -170,6 +176,7 @@ function circuit = triangle(U, d, n)
         end
         
       end
+      % Clear the remaining nonzero entries below diagonal using one ∧[T c2 . . . cn,V ].
       cir = qclab.QCircuit(n, 0, d);
       controls = (1:n-1);
       controlStates = dec2base_(j, d, n);
@@ -188,6 +195,8 @@ function circuit = triangle(U, d, n)
         circuit.push_back(g);
       end
     end
+    % Use Triangle(∗, d, n − 1) on the dn−1 × dn−1 matrix at the (k + 1)st block diagonal
+    % adding |k + 1〉- control to the most significant qudit.
     subcircuit = triangle(U(b_size * (k+1) + 1:b_size * (k+2), b_size * (k+1) + 1:b_size * (k+2)), d, n-1);
     cir = addControls(subcircuit, 0, k+1, d, n);
     U = cir.apply('R', 'N', n, U, 0, d);
