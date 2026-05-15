@@ -99,6 +99,10 @@ end
 function circuit = addControls(subcircuit, controls, controlStates, d, n)
   circuit = qclab.QCircuit(n, 0, d);
   for gate = subcircuit.objects
+    if isa(gate, 'qclab.QCircuit')
+      circuit.push_back(addControls(gate, controls, controlStates, d, n));
+      continue;
+    end
     if isa(gate, 'qclab.qgates.QControlledGate2')
       gate_ = gate.gate();
       controls_ = [controls, gate.control+1];
@@ -149,9 +153,7 @@ function circuit = triangle(U, d, n)
   subcircuit = triangle(U(1:d^(n-1),1:d^(n-1)), d, n-1);
   cir = addControls(subcircuit, [], [], d, n);
   U = cir.apply('R', 'N', n, U, 0, d);
-  for g = cir.objects
-    circuit.push_back(g);
-  end
+  circuit.push_back(cir);
   b_size = floor(d^(n-1)); % block size
   for k=0:d-2
     c_s = floor(b_size * k); % first column of block
@@ -171,9 +173,7 @@ function circuit = triangle(U, d, n)
         controlStates = mod(l, d);
         cir = addControls(subcircuit, controls, controlStates, d, n);
         U = cir.apply('R', 'N', n, U, 0, d);
-        for g = cir.objects
-          circuit.push_back(g);
-        end
+        circuit.push_back(cir);
         
       end
       % Clear the remaining nonzero entries below diagonal using one ∧[T c2 . . . cn,V ].
@@ -191,18 +191,14 @@ function circuit = triangle(U, d, n)
         cir.push_back(qclab.qgates.MControlledGate(gate, controls, 0, controlStates));
       end
       U = cir.apply('R', 'N', n, U, 0, d);
-      for g = cir.objects
-        circuit.push_back(g);
-      end
+      circuit.push_back(cir);
     end
     % Use Triangle(∗, d, n − 1) on the dn−1 × dn−1 matrix at the (k + 1)st block diagonal
     % adding |k + 1〉- control to the most significant qudit.
     subcircuit = triangle(U(b_size * (k+1) + 1:b_size * (k+2), b_size * (k+1) + 1:b_size * (k+2)), d, n-1);
     cir = addControls(subcircuit, 0, k+1, d, n);
     U = cir.apply('R', 'N', n, U, 0, d);
-    for g = cir.objects
-      circuit.push_back(g);
-    end
+    circuit.push_back(cir);
 
   end
   
