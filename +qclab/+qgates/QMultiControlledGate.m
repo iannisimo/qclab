@@ -101,8 +101,8 @@ classdef QMultiControlledGate < qclab.QObject
       else
         assert( length(current.states{1}) == d^nbQubits )
       end
-      I1 = qclab.qId(1,isSparse, d);
-      Itarget = qclab.qId(obj.gate.nbQubits,isSparse, d);
+      I1 = qclab.qId(1,true, d);
+      Itarget = qclab.qId(obj.gate.nbQubits,true, d);
       % operation
       if strcmp(op, 'N') % normal
         mat = obj.gate.matrix(d);
@@ -111,6 +111,7 @@ classdef QMultiControlledGate < qclab.QObject
       else % conjugate transpose
         mat = obj.gate.matrix(d)';
       end
+      if isSparse, mat = sparse(mat); end
       target_idx = find(controls > targetEnd, 1);
       if isempty(target_idx)
         target_idx = length(controls) + 1;
@@ -122,37 +123,29 @@ classdef QMultiControlledGate < qclab.QObject
       if target_idx > 1
         for i = controls(1):controls(target_idx-1)
           if i == controls(c_idx)
-            Ec = diag(0:d-1 == obj.controlStates_(c_idx));
+            Ec = sparse(1:d, 1:d, 0:d-1 == obj.controlStates_(c_idx));
             Cup = kron(Cup, Ec);
             c_idx = c_idx + 1 ;
           else
             Cup = kron(Cup, I1);
           end
         end
-        if isSparse
-          ICup = speye(size(Cup, 1)) - Cup;
-        else
-          ICup = eye(size(Cup, 1)) - Cup;
-        end
-        Sup = qclab.qId(targetStart - controls(target_idx-1) - 1,isSparse, d) ;
+        ICup = speye(size(Cup, 1)) - Cup;
+        Sup = qclab.qId(targetStart - controls(target_idx-1) - 1,true, d) ;
       end
       % (I)Controls down
       Cdown = 1; ICdown = 1; Sdown = 1;
       if target_idx <= length(controls)
         for i = controls(target_idx):controls(end)
           if i == controls(c_idx)
-            Ec = diag(0:d-1 == obj.controlStates_(c_idx));
+            Ec = sparse(1:d, 1:d, 0:d-1 == obj.controlStates_(c_idx));
             Cdown = kron(Cdown, Ec);
             c_idx = c_idx + 1 ;
           else
             Cdown = kron(Cdown, I1);
           end
         end
-        if isSparse
-          ICdown = speye(size(Cdown, 1)) - Cdown;
-        else
-          ICdown = eye(size(Cdown, 1)) - Cdown;
-        end
+        ICdown = speye(size(Cdown, 1)) - Cdown;
         Sdown = qclab.qId(controls(target_idx) - targetEnd - 1,isSparse, d);
       end
       if size(Cup,1) == 1
@@ -172,12 +165,12 @@ classdef QMultiControlledGate < qclab.QObject
       if ( minq == 0 && maxq == nbQubits - 1)
         matn = mats ;
       elseif minq == 0
-        matn = kron(mats, qclab.qId(nbQubits - s,isSparse, d));
+        matn = kron(mats, qclab.qId(nbQubits - s,true, d));
       elseif maxq == nbQubits - 1
-        matn = kron(qclab.qId(nbQubits - s,isSparse, d), mats);
+        matn = kron(qclab.qId(nbQubits - s,true, d), mats);
       else
-        matn = kron(qclab.qId(minq, isSparse, d), kron(mats, ...
-          qclab.qId(nbQubits - maxq - 1,isSparse, d))) ;
+        matn = kron(qclab.qId(minq, true, d), kron(mats, ...
+          qclab.qId(nbQubits - maxq - 1,true, d))) ;
       end
       % apply
       current = qclab.applyGateTo( current, matn, side ) ;

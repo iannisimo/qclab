@@ -163,12 +163,12 @@ classdef MatrixGate < qclab.QObject
       if (nbQubits == obj.nbQubits)
         matn = matu ;
       elseif ( qubits(1) == 0 )
-        matn = kron(matu, qclab.qId(nbQubits-obj.nbQubits, isSparse, d)) ;
+        matn = kron(matu, qclab.qId(nbQubits-obj.nbQubits, true, d)) ;
       elseif ( qubits(obj.nbQubits) == nbQubits-1)
-        matn = kron(qclab.qId(nbQubits-obj.nbQubits, isSparse, d), matu);
+        matn = kron(qclab.qId(nbQubits-obj.nbQubits, true, d), matu);
       else
-        matn = kron(kron(qclab.qId(qubits(1),isSparse, d), matu), ...
-          qclab.qId(nbQubits-qubits(obj.nbQubits)-1, isSparse, d)) ;
+        matn = kron(kron(qclab.qId(qubits(1),true, d), matu), ...
+          qclab.qId(nbQubits-qubits(obj.nbQubits)-1, true, d)) ;
       end
       current = qclab.applyGateTo( current, matn, side ) ;
     end

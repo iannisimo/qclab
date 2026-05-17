@@ -57,15 +57,17 @@ classdef QControlledGate2 < qclab.qgates.QGate2
     function [mat] = matrix(obj, d)
       if nargin <= 1, d = 2; end
       isSparse = qclab.isSparse(obj.nbQubits);
-      Ec = diag(0:d-1 == obj.controlState_);
-      En = diag(0:d-1 ~= obj.controlState_);
-      I1 = qclab.qId(1, isSparse, d);
+      Ec = sparse(1:d, 1:d, 0:d-1 == obj.controlState_);
+      En = sparse(1:d, 1:d, 0:d-1 ~= obj.controlState_);
+      I1 = qclab.qId(1, true, d);
       CG = obj.gate.matrix(d);
+      if isSparse, CG = sparse(CG); end
       if(obj.control_ < obj.target)
         mat = kron(Ec, CG) + kron(En, I1);
       else
         mat = kron(CG, Ec) + kron(I1, En);
       end
+      if ~isSparse, mat = full(mat); end
     end
 
     % ==========================================================================
@@ -103,9 +105,9 @@ classdef QControlledGate2 < qclab.qgates.QGate2
           current, offset, d);
         return
       end
-      Ec = diag(0:d-1 == obj.controlState_);
-      En = diag(0:d-1 ~= obj.controlState_);
-      I1 = qclab.qId(1,isSparse, d);
+      Ec = sparse(1:d, 1:d, 0:d-1 == obj.controlState_);
+      En = sparse(1:d, 1:d, 0:d-1 ~= obj.controlState_);
+      I1 = qclab.qId(1,true, d);
       % operation
       if strcmp(op, 'N') % normal
         mat1 = obj.gate.matrix(d);
@@ -114,9 +116,10 @@ classdef QControlledGate2 < qclab.qgates.QGate2
       else % conjugate transpose
         mat1 = obj.gate.matrix(d)';
       end
+      if isSparse, mat1 = sparse(mat1); end
       % linear combination of Kronecker products
       s = qubits(2) - qubits(1) + 1;
-      Imid =  qclab.qId(s-2, isSparse, d);
+      Imid =  qclab.qId(s-2, true, d);
       if obj.control_ < obj.target
         mats = kron(kron(Ec, Imid), mat1) + kron(kron(En, Imid), I1);
       else
@@ -125,12 +128,12 @@ classdef QControlledGate2 < qclab.qgates.QGate2
       if ( qubits(1) == 0 && qubits(2) == nbQubits - 1)
         matn = mats;
       elseif ( qubits(1) == 0 )
-        matn = kron(mats, qclab.qId(nbQubits - s, isSparse, d));
+        matn = kron(mats, qclab.qId(nbQubits - s, true, d));
       elseif ( qubits(2) == nbQubits - 1 )
-        matn = kron(qclab.qId(nbQubits - s, isSparse, d), mats);
+        matn = kron(qclab.qId(nbQubits - s, true, d), mats);
       else
-        matn = kron(kron(qclab.qId(qubits(1), isSparse, d),mats),...
-          qclab.qId(nbQubits - qubits(2) - 1, isSparse, d));
+        matn = kron(kron(qclab.qId(qubits(1), true, d),mats),...
+          qclab.qId(nbQubits - qubits(2) - 1, true, d));
       end
       % apply
       current = qclab.applyGateTo(current, matn, side ) ;

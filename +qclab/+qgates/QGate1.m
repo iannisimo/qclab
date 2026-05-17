@@ -96,16 +96,17 @@ classdef QGate1 < qclab.QObject
       else % conjugate transpose
         mat1 = obj.matrix(d)';
       end
+      if isSparse, mat1 = sparse(mat1); end
       % kron(Ileft, mat1, Iright)  
       if (nbQubits == 1)
         matn = mat1 ;
       elseif ( qubit == 0 )
-        matn = kron(mat1, qclab.qId(nbQubits-1, isSparse, d)) ;
+        matn = kron(mat1, qclab.qId(nbQubits-1, true, d)) ;
       elseif ( qubit == nbQubits-1)
-        matn = kron(qclab.qId(nbQubits-1, isSparse, d), mat1);
+        matn = kron(qclab.qId(nbQubits-1, true, d), mat1);
       else
-        matn = kron(kron(qclab.qId(qubit,isSparse, d), mat1), qclab.qId(...
-          nbQubits-qubit-1,isSparse, d)) ;
+        matn = kron(kron(qclab.qId(qubit,true, d), mat1), qclab.qId(...
+          nbQubits-qubit-1,true, d)) ;
       end
       % side
       current = qclab.applyGateTo(current, matn, side ) ;
