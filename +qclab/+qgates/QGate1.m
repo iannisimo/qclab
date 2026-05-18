@@ -108,6 +108,7 @@ classdef QGate1 < qclab.QObject
         matn = kron(kron(qclab.qId(qubit,true, d), mat1), qclab.qId(...
           nbQubits-qubit-1,true, d)) ;
       end
+      if ~isSparse, matn = full(matn); end
       % side
       current = qclab.applyGateTo(current, matn, side ) ;
     end

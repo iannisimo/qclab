@@ -172,6 +172,7 @@ classdef QMultiControlledGate < qclab.QObject
         matn = kron(qclab.qId(minq, true, d), kron(mats, ...
           qclab.qId(nbQubits - maxq - 1,true, d))) ;
       end
+      if ~isSparse, matn = full(matn); end
       % apply
       current = qclab.applyGateTo( current, matn, side ) ;
     end

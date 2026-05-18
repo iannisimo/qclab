@@ -135,6 +135,7 @@ classdef QControlledGate2 < qclab.qgates.QGate2
         matn = kron(kron(qclab.qId(qubits(1), true, d),mats),...
           qclab.qId(nbQubits - qubits(2) - 1, true, d));
       end
+      if ~isSparse, matn = full(matn); end
       % apply
       current = qclab.applyGateTo(current, matn, side ) ;
     end

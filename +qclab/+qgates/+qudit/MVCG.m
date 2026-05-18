@@ -35,10 +35,11 @@ classdef MVCG < qclab.qgates.QGate2
       else
         mat = zeros(d^2, d^2);
         for i = 1:length(obj.gates_)
-          mat = mat + kron(obj.gates_(i).matrix(d), qclab.En(i-1, d, isSparse));
+          mat = mat + kron(obj.gates_(i).matrix(d), qclab.En(i-1, d, true));
         end
       end
       if isSparse, mat = sparse(mat); end
+      if ~isSparse, mat = full(mat); end
     end
 
     function [current] = apply(obj, side, op, nbQubits, current, offset, d)
@@ -64,26 +65,28 @@ classdef MVCG < qclab.qgates.QGate2
         return
       end
       s = obj.target_ - obj.control_ + 1;
-      Imid = qclab.qId(s-2, isSparse, d);
-      mats = zeros(d^s, d^s);
+      Imid = qclab.qId(s-2, true, d);
+      mats = sparse(d^s, d^s);
+      % TODO mat1
       for i = 1:length(obj.gates_)
         if obj.control_ < obj.target_
-          mats = mats + kron(kron(qclab.En(i-1, d, isSparse), Imid), obj.gates_(i).matrix(d));
+          mats = mats + kron(kron(qclab.En(i-1, d, true), Imid), obj.gates_(i).matrix(d));
         else
-          mats = mats + kron(kron(obj.gates_(i).matrix(d), Imid), qclab.En(i-1, d, isSparse));
+          mats = mats + kron(kron(obj.gates_(i).matrix(d), Imid), qclab.En(i-1, d, true));
         end
       end
       if ( obj.control_ == 0 && obj.target_ == nbQubits - 1)
         matn = mats;
       elseif ( obj.control_ == 0 )
-        matn = kron(mats, qclab.qId(nbQubits - s, isSparse, d));
+        matn = kron(mats, qclab.qId(nbQubits - s, true, d));
       elseif ( obj.target_ == nbQubits - 1 )
-        matn = kron(qclab.qId(nbQubits - s, isSparse, d), mats);
+        matn = kron(qclab.qId(nbQubits - s, true, d), mats);
       else
-        matn = kron(kron(qclab.qId(obj.control_, isSparse, d),mats),...
-          qclab.qId(nbQubits - obj.target_ - 1, isSparse, d));
+        matn = kron(kron(qclab.qId(obj.control_, true, d),mats),...
+          qclab.qId(nbQubits - obj.target_ - 1, true, d));
       end
       % apply
+      if ~isSparse, matn = full(matn); end
       current = qclab.applyGateTo(current, matn, side ) ;
     end
 
