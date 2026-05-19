@@ -39,7 +39,6 @@ classdef MVCG < qclab.qgates.QGate2
         end
       end
       if isSparse, mat = sparse(mat); end
-      if ~isSparse, mat = full(mat); end
     end
 
     function [current] = apply(obj, side, op, nbQubits, current, offset, d)
@@ -86,7 +85,6 @@ classdef MVCG < qclab.qgates.QGate2
           qclab.qId(nbQubits - obj.target_ - 1, true, d));
       end
       % apply
-      if ~isSparse, matn = full(matn); end
       current = qclab.applyGateTo(current, matn, side ) ;
     end
 

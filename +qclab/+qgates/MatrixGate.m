@@ -170,7 +170,6 @@ classdef MatrixGate < qclab.QObject
         matn = kron(kron(qclab.qId(qubits(1),true, d), matu), ...
           qclab.qId(nbQubits-qubits(obj.nbQubits)-1, true, d)) ;
       end
-      if ~isSparse, matn = full(matn); end
       current = qclab.applyGateTo( current, matn, side ) ;
     end
 
