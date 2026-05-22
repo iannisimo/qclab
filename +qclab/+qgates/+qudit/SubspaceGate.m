@@ -19,7 +19,7 @@ classdef SubspaceGate < qclab.qgates.QGate1
         obj.gate_ = copy(gate);
         obj.gate_.setQubits(0);
       else
-        obj.gate_ = gate( target );
+        obj.gate_ = gate( qubit );
         assert(isa(obj.gate_, 'qclab.qgates.QGate1'));
       end
 
