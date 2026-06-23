@@ -1,9 +1,9 @@
 % https://link.aps.org/doi/10.1103/PhysRevLett.94.230502
 
-IMAG = 1;
+IMAG = 0;
 
 d = 3;
-n = 3;
+n = 2;
 
 U = randn(d^n) + IMAG * 1i * randn(d^n);
 [U, ~] = qr(U);
@@ -152,7 +152,7 @@ function circuit = triangle(U, d, n)
   % (writing output to bottom n − 1 circuit lines)
   subcircuit = triangle(U(1:d^(n-1),1:d^(n-1)), d, n-1);
   cir = addControls(subcircuit, [], [], d, n);
-  U = cir.apply('R', 'N', n, U, 0, d);
+  U = cir.apply('R', 'N', n, U, 0, d)
   circuit.push_back(cir);
   b_size = floor(d^(n-1)); % block size
   for k=0:d-2
@@ -172,7 +172,7 @@ function circuit = triangle(U, d, n)
         controls = 0;
         controlStates = mod(l, d);
         cir = addControls(subcircuit, controls, controlStates, d, n);
-        U = cir.apply('R', 'N', n, U, 0, d);
+        U = cir.apply('R', 'N', n, U, 0, d)
         circuit.push_back(cir);
         
       end
@@ -190,22 +190,52 @@ function circuit = triangle(U, d, n)
       else
         cir.push_back(qclab.qgates.MControlledGate(gate, controls, 0, controlStates));
       end
-      U = cir.apply('R', 'N', n, U, 0, d);
+      U = cir.apply('R', 'N', n, U, 0, d)
+      circuit.push_back(cir);
+
+      cir = qclab.QCircuit(n, 0, d);
+      U(j+1, j+1)
+      phase = 1/U(j+1, j+1);
+      phase = phase / norm(phase);
+      phaseGate = qclab.qgates.Phase(n-1, real(phase), imag(phase));
+      % TODO find subspace
+      phaseDGate = qclab.qgates.qudit.SubspaceGate(phaseGate, [mod(j+1, d), mod(j, d)], n-1);
+      if isscalar(controls)
+        cir.push_back(qclab.qgates.ControlledGate(phaseDGate, controls, 0, controlStates));
+      else
+        cir.push_back(qclab.qgates.MControlledGate(phaseDGate, controls, 0, controlStates));
+      end
+      U = cir.apply('R', 'N', n, U, 0, d)
       circuit.push_back(cir);
     end
     % Use Triangle(∗, d, n − 1) on the dn−1 × dn−1 matrix at the (k + 1)st block diagonal
     % adding |k + 1〉- control to the most significant qudit.
     subcircuit = triangle(U(b_size * (k+1) + 1:b_size * (k+2), b_size * (k+1) + 1:b_size * (k+2)), d, n-1);
     cir = addControls(subcircuit, 0, k+1, d, n);
-    U = cir.apply('R', 'N', n, U, 0, d);
+    U = cir.apply('R', 'N', n, U, 0, d)
     circuit.push_back(cir);
 
   end
   
 end
 
+tic
 cir = triangle(U, d, n);
+toc
 res = cir.apply('R', 'N', n, U, 0, d);
 norm(abs(res) - eye(size(res)))
 
 % TODO missing global phases
+%
+%
+function [n] = countgates(cir)
+  n = 0;
+  for gate = cir.objects
+    if class(gate) == 'qclab.QCircuit'
+      n = n + countgates(gate);
+    end
+    n = n + 1;
+  end
+end
+
+countgates(cir)

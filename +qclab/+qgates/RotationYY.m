@@ -81,7 +81,7 @@ classdef RotationYY < qclab.qgates.QRotationGate2
   
   methods
     % matrix
-    function [mat] = matrix(obj)
+    function [mat] = matrix(obj, ~)
       c = obj.cos; s = 1i*obj.sin;
       mat = [c, 0, 0, s;
              0, c, -s, 0;

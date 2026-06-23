@@ -268,8 +268,7 @@ classdef iSWAP < qclab.qgates.QGate2
     end
     
     % matrix
-    function [mat] = matrix
-      mat = [1, 0,  0, 0; 
+    function [mat] = matrix(~)      mat = [1, 0,  0, 0; 
              0, 0, 1i, 0;
              0, 1i, 0, 0;
              0, 0,  0, 1];

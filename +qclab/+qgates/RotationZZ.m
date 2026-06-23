@@ -80,7 +80,7 @@ classdef RotationZZ < qclab.qgates.QRotationGate2
   
   methods
     % matrix
-    function [mat] = matrix(obj)
+    function [mat] = matrix(obj, ~)
       c = obj.cos; s = 1i*obj.sin;
       mat = [c - s, 0,     0,     0;
              0,     c + s, 0,     0;

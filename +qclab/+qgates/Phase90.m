@@ -67,8 +67,7 @@ classdef Phase90 < qclab.qgates.QGate1
     end
     
     % matrix
-    function [mat] = matrix
-      mat = [1, 0; 
+    function [mat] = matrix(~)      mat = [1, 0; 
              0, 1i];
     end
     

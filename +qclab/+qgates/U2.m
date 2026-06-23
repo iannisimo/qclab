@@ -129,7 +129,7 @@ classdef U2 < qclab.qgates.QGate1 & qclab.QAdjustable
     end
     
     % matrix
-    function [mat] = matrix(obj)
+    function [mat] = matrix(obj, ~)
       ppl = obj.angles_(1) + obj.angles_(2) ;
       mat = [1,                            -obj.cosLambda - 1i * obj.sinLambda;
              obj.cosPhi + 1i * obj.sinPhi, ppl.cos + 1i * ppl.sin];
