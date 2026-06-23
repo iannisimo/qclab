@@ -150,7 +150,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
 
 
     % matrix
-    function [mat] = matrix(obj)
+    function [mat] = matrix(obj, ~)
       % matrix - Return the unitary matrix corresponding to this quantum circuit.
       %          Does not work for circuits which include measurements
       %

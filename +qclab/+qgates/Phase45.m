@@ -68,8 +68,7 @@ classdef Phase45 < qclab.qgates.QGate1
     end
     
     % matrix
-    function [mat] = matrix
-      sqrt2 = 1 / sqrt(2);
+    function [mat] = matrix(~)      sqrt2 = 1 / sqrt(2);
       mat = [1, 0; 
              0, sqrt2 + 1i*sqrt2];
     end

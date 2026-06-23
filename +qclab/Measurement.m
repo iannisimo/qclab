@@ -176,7 +176,7 @@ classdef Measurement < qclab.QObject
       label = obj.label_;
     end
 
-    function [mat] = matrix(obj)
+    function [mat] = matrix(obj, ~)
       % matrix - Return the matrix representation of the basis 
       %          change of the measurement.
       %

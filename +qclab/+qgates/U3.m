@@ -146,7 +146,7 @@ classdef U3 < qclab.qgates.QGate1 & qclab.QAdjustable
     end
     
     % matrix
-    function [mat] = matrix(obj)
+    function [mat] = matrix(obj, ~)
       ppl = obj.angles_(1) + obj.angles_(2) ;
       gp = obj.globalPhase ;
       mat = zeros(2,2);
