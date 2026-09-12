@@ -244,7 +244,8 @@ classdef SWAP < qclab.qgates.QGate2
     end
     
     % matrix
-    function [mat] = matrix(~)      mat = [1, 0, 0, 0; 
+    function [mat] = matrix(~)
+      mat = [1, 0, 0, 0; 
              0, 0, 1, 0;
              0, 1, 0, 0;
              0, 0, 0, 1];
