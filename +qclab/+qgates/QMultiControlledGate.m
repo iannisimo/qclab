@@ -64,7 +64,7 @@ classdef QMultiControlledGate < qclab.QObject
       maxq = max([controls(end), targets]);
       nbQubits = maxq - minq + 1;
       I = qclab.qId(nbQubits, isSparse, d);
-      mat = obj.apply('L', 'N', nbQubits, I, 0, d);
+      mat = obj.apply('L', 'N', nbQubits, I, -minq, d);
     end
 
     % ==========================================================================

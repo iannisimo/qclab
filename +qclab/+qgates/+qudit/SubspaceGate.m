@@ -39,7 +39,7 @@ classdef SubspaceGate < qclab.qgates.QGate1
 
     function [bool] = equals(obj, other)
       bool = isa(other, 'qclab.qgates.qudit.SubspaceGate') && ... % Same class
-        obj.subspace_ == other.subspace_ && ... % Acting on the same subspace
+        isequal(obj.subspace_, other.subspace_) && ... % Acting on the same subspace
         obj.gate_.equals(other.gate_); % Same gate
     end
 
