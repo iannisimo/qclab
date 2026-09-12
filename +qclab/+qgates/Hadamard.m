@@ -45,7 +45,7 @@ classdef Hadamard < qclab.qgates.QGate1
     
     % matrix
     function [mat] = matrix(d)
-      if nargin == 1, d = 2; end
+      if nargin == 0, d = 2; end
       sqrtd = 1/sqrt(d);
       if d == 2
         mat = [sqrtd, sqrtd;
