@@ -116,11 +116,28 @@ classdef SWAP < qclab.qgates.QGate2
       end
       qubits = obj.qubits + offset; 
       assert( qubits(1) < nbQubits && qubits(2) < nbQubits ); 
-      cnot01 = qclab.qgates.CNOT( qubits(1), qubits(2) );
-      cnot10 = qclab.qgates.CNOT( qubits(2), qubits(1) );
-      current = cnot01.apply( side, op, nbQubits, current, 0 );
-      current = cnot10.apply( side, op, nbQubits, current, 0 );
-      current = cnot01.apply( side, op, nbQubits, current, 0 );
+      if d == 2
+        cnot01 = qclab.qgates.CNOT( qubits(1), qubits(2) );
+        cnot10 = qclab.qgates.CNOT( qubits(2), qubits(1) );
+        current = cnot01.apply( side, op, nbQubits, current, 0 );
+        current = cnot10.apply( side, op, nbQubits, current, 0 );
+        current = cnot01.apply( side, op, nbQubits, current, 0 );
+      else
+        h0 = qclab.qgates.Hadamard(qubits(1));
+        h1 = qclab.qgates.Hadamard(qubits(2));
+        z = qclab.qgates.PauliZ();
+        cz01 = qclab.qgates.qudit.GCG(qubits(1), qubits(2),z);
+        cz10 = qclab.qgates.qudit.GCG(qubits(2), qubits(1),z);
+        current = h1.apply( side, op, nbQubits, current, 0, d );
+        current = cz01.apply( side, op, nbQubits, current, 0, d );
+        current = h1.apply( side, op, nbQubits, current, 0, d );
+        current = h0.apply( side, op, nbQubits, current, 0, d );
+        current = cz10.apply( side, op, nbQubits, current, 0, d );
+        current = h0.apply( side, op, nbQubits, current, 0, d );
+        current = h1.apply( side, op, nbQubits, current, 0, d );
+        current = cz01.apply( side, op, nbQubits, current, 0, d );
+        current = h1.apply( side, op, nbQubits, current, 0, d );
+      end
     end
      
     % toQASM
@@ -232,7 +249,13 @@ classdef SWAP < qclab.qgates.QGate2
     end
     
   end %methods
-  
+
+  methods (Access = protected)
+    function qd = isQudit(~)
+      qd = true;
+    end
+  end
+
   methods (Static)
     % fixed
     function [bool] = fixed
@@ -245,11 +268,16 @@ classdef SWAP < qclab.qgates.QGate2
     end
     
     % matrix
-    function [mat] = matrix(~)
-      mat = [1, 0, 0, 0; 
-             0, 0, 1, 0;
-             0, 1, 0, 0;
-             0, 0, 0, 1];
+    function [mat] = matrix(d)
+      if nargin < 1, d = 2; end
+      mat = zeros(d^2, d^2);
+      for q0 = 0:d-1
+        for q1 = 0:d-1
+          old = q0 * d + q1;
+          new = q1 * d + q0;
+          mat(new + 1, old + 1) = 1;
+        end
+      end
     end
   end %static methods
 end %SWAP
