@@ -139,7 +139,7 @@ classdef MatrixGate < qclab.QObject
     function [current] = apply(obj, side, op, nbQubits, current, offset, d)
       if nargin <= 5, offset = 0; end
       if nargin <= 6, d = 2; end
-      isSparse = qclab.isSparse(nbQubits) ;
+      isSparse = qclab.isSparse(nbQubits, d) ;
       if isa(current, 'double')
         if strcmp(side,'L') % left
           assert( size(current,2) == d^nbQubits);

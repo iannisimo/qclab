@@ -27,8 +27,7 @@ classdef MVCG < qclab.qgates.QGate2
     function [mat] = matrix(obj, d)
       if nargin <= 1, d = 2; end
       assert(length(obj.gates_) == d);
-      % TODO make issparse dependant on d and update this
-      isSparse = false;
+      isSparse = qclab.isSparse(obj.nbQubits, d);
       if obj.control_ < obj.target_
         matrices = arrayfun(@(g) g.matrix(d), obj.gates_, 'UniformOutput', false);
         mat = blkdiag(matrices{:});
@@ -45,7 +44,7 @@ classdef MVCG < qclab.qgates.QGate2
       if nargin <= 5, offset = 0; end
       if nargin <= 6, d = 2; end
       assert(nbQubits >= 2);
-      isSparse = qclab.isSparse(nbQubits);
+      isSparse = qclab.isSparse(nbQubits, d);
       if isa(current, 'double')
         if strcmp(side,'L') % left
           assert( size(current,2) == d^nbQubits);

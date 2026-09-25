@@ -146,8 +146,7 @@ classdef Phase < qclab.qgates.QGate1 & qclab.QAdjustable
         mat = [1, 0;
                0, p];
       else 
-        % TODO isSparse dependent on d
-        isSparse = false;
+        isSparse = qclab.isSparse(obj.nbQubits, d);
         mat = qclab.qId(1, isSparse, d);
         mat(d, d) = p;
       end

@@ -56,7 +56,7 @@ classdef QControlledGate2 < qclab.qgates.QGate2
     % matrix
     function [mat] = matrix(obj, d)
       if nargin <= 1, d = 2; end
-      isSparse = qclab.isSparse(obj.nbQubits);
+      isSparse = qclab.isSparse(obj.nbQubits, d);
       Ec = diag(0:d-1 == obj.controlState_);
       En = diag(0:d-1 ~= obj.controlState_);
       I1 = qclab.qId(1, isSparse, d);
@@ -84,7 +84,7 @@ classdef QControlledGate2 < qclab.qgates.QGate2
     function [current] = apply(obj, side, op, nbQubits, current, offset, d)
       if nargin <= 5, offset = 0; end
       if nargin <= 6, d = 2; end
-      isSparse = qclab.isSparse(nbQubits) ;
+      isSparse = qclab.isSparse(nbQubits, d) ;
       assert( nbQubits >= 2 );
       if isa(current, 'double')
         if strcmp(side,'L') % left

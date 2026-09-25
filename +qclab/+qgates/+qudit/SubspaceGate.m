@@ -30,8 +30,7 @@ classdef SubspaceGate < qclab.qgates.QGate1
       if nargin <= 1, d = 2; end
       assert(d >= length(obj.subspace_));
       assert(d >= max(obj.subspace_) + 1);
-      % TODO make issparse dependant on d and update this
-      isSparse = false;
+      isSparse = qclab.isSparse(obj.nbQubits, d);
       submat = obj.gate_.matrix(length(obj.subspace_));
       mat = qclab.qId(1, isSparse, d);
       mat(obj.subspace_ + 1, obj.subspace_ + 1) = submat;

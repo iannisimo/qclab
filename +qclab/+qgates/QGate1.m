@@ -78,7 +78,7 @@ classdef QGate1 < qclab.QObject
       assert( nbQubits >= 1);
       qubit = obj.qubit + offset ;
       assert( qubit < nbQubits ) ;
-      isSparse = qclab.isSparse(nbQubits) ;
+      isSparse = qclab.isSparse(nbQubits, d) ;
       if isa(current, 'double')
         if strcmp(side,'L') % left
           assert( size(current,2) == d^nbQubits);

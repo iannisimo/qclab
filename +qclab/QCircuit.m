@@ -162,7 +162,7 @@ classdef QCircuit < qclab.QObject & qclab.QAdjustable
       % Outputs:
       %   mat - Unitary matrix representing the quantum circuit (double).
       assert(obj.nbMeasurements == 0)
-      issparse = qclab.isSparse(obj.nbQubits_);
+      issparse = qclab.isSparse(obj.nbQubits_, obj.d_);
       mat = qclab.qId(obj.nbQubits, issparse, obj.d_);
       for i = 1:length(obj.objects_)
         mat = apply(obj.objects_(i), 'R', 'N', obj.nbQubits, mat, 0, obj.d_) ;

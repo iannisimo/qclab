@@ -22,8 +22,7 @@ classdef SUM < qclab.qgates.QGate2
 
     function [mat] = matrix(obj, d)
       if nargin <= 1, d = 2; end
-      % TODO make issparse dependent on d and update this
-      isSparse = false;
+      isSparse = qclab.isSparse(obj.nbQubits, d);
       Id = eye(d);
       blocks = arrayfun(@(k) circshift(Id, k), 0:d-1, 'UniformOutput', false);
       if obj.control_ < obj.target_
@@ -40,7 +39,7 @@ classdef SUM < qclab.qgates.QGate2
     function [current] = apply(obj, side, op, nbQubits, current, offset, d)
       if nargin <= 5, offset = 0; end
       if nargin <= 6, d = 2; end
-      isSparse = qclab.isSparse(nbQubits);
+      isSparse = qclab.isSparse(nbQubits, d);
       assert( nbQubits >= 2 );
       if isa(current, 'double')
         if strcmp(side,'L') % left

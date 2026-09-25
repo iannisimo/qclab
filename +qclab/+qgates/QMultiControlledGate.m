@@ -57,7 +57,7 @@ classdef QMultiControlledGate < qclab.QObject
     % matrix
     function [mat] = matrix(obj, d)
       if nargin <= 1, d = 2; end
-      isSparse = qclab.isSparse(obj.nbQubits);
+      isSparse = qclab.isSparse(obj.nbQubits, d);
       controls = obj.controls;
       targets = obj.targets;
       minq = min([controls(1), targets]);
@@ -84,7 +84,7 @@ classdef QMultiControlledGate < qclab.QObject
     function [current] = apply(obj, side, op, nbQubits, current, offset, d)
       if nargin <= 5, offset = 0; end
       if nargin <= 6, d = 2; end
-      isSparse = qclab.isSparse(nbQubits) ;
+      isSparse = qclab.isSparse(nbQubits, d) ;
       controls = obj.controls + offset ;
       targets = obj.targets + offset ;
       minq = min([controls(1), targets]);

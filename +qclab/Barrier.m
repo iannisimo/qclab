@@ -57,7 +57,7 @@ classdef Barrier < qclab.QObject
     % matrix
     function [mat] = matrix(obj, d)
       if nargin == 1, d = 2; end
-      isSparse = qclab.isSparse(obj.nbQubits);
+      isSparse = qclab.isSparse(obj.nbQubits, d);
       mat = qclab.qId(obj.nbQubits,isSparse, d);
     end
 
@@ -78,7 +78,7 @@ classdef Barrier < qclab.QObject
     % ==========================================================================
     function [current] = apply(obj, side, op, nbQubits, current, offset, d)
       if nargin <= 6, d = 2; end
-      isSparse = qclab.isSparse(nbQubits) ;
+      isSparse = qclab.isSparse(nbQubits, d) ;
       if isa(current, 'double')
         if strcmp(side,'L') % left
           assert( size(current,2) == d^nbQubits);
