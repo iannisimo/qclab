@@ -17,7 +17,7 @@ function [isSparse] = isSparse(nbQubits, d)
       isSparse = true ;
     end
   else
-    isSparse = d^nbQubits < 512;
+    isSparse = d^nbQubits >= 512;
   end
 end
 
