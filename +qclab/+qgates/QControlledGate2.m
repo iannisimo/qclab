@@ -61,6 +61,13 @@ classdef QControlledGate2 < qclab.qgates.QGate2
       En = diag(0:d-1 ~= obj.controlState_);
       I1 = qclab.qId(1, isSparse, d);
       CG = obj.gate.matrix(d);
+      if isSparse
+        % keep the d^2 x d^2 block sparse: dense factors would make the kron
+        % products dense, costing O(d^4) memory and time per gate
+        Ec = sparse(double(Ec));
+        En = sparse(double(En));
+        CG = sparse(CG);
+      end
       if(obj.control_ < obj.target)
         mat = kron(Ec, CG) + kron(En, I1);
       else

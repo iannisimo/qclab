@@ -122,7 +122,7 @@ classdef QMultiControlledGate < qclab.QObject
       if target_idx > 1
         for i = controls(1):controls(target_idx-1)
           if i == controls(c_idx)
-            Ec = diag(0:d-1 == obj.controlStates_(c_idx));
+            Ec = controlProjector(d, obj.controlStates_(c_idx), isSparse);
             Cup = kron(Cup, Ec);
             c_idx = c_idx + 1 ;
           else
@@ -141,7 +141,7 @@ classdef QMultiControlledGate < qclab.QObject
       if target_idx <= length(controls)
         for i = controls(target_idx):controls(end)
           if i == controls(c_idx)
-            Ec = diag(0:d-1 == obj.controlStates_(c_idx));
+            Ec = controlProjector(d, obj.controlStates_(c_idx), isSparse);
             Cdown = kron(Cdown, Ec);
             c_idx = c_idx + 1 ;
           else
@@ -570,5 +570,12 @@ classdef QMultiControlledGate < qclab.QObject
     function qd = isQudit(obj)
       qd = obj.gate().isQudit;
     end
+  end
+end
+
+function Ec = controlProjector(d, state, isSparse)
+  Ec = double(diag(0:d-1 == state));
+  if isSparse
+    Ec = sparse(Ec);
   end
 end
