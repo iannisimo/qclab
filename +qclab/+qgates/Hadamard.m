@@ -37,15 +37,22 @@
 % (C) Copyright Daan Camps and Roel Van Beeumen 2021.  
 % ==============================================================================
 classdef Hadamard < qclab.qgates.QGate1
+  properties (Access = protected)
+    %> true if this gate is the adjoint F_d^dagger (differs from F_d for d > 2)
+    adjoint_(1,1) logical = false
+  end
+
   methods (Static)
     % fixed
     function [bool] = fixed
       bool = true;
     end
-    
+  end
+
+  methods
     % matrix
-    function [mat] = matrix(d)
-      if nargin == 0, d = 2; end
+    function [mat] = matrix(obj, d)
+      if nargin < 2, d = 2; end
       sqrtd = 1/sqrt(d);
       if d == 2
         mat = [sqrtd, sqrtd;
@@ -54,16 +61,15 @@ classdef Hadamard < qclab.qgates.QGate1
       end
       n = 0:d-1;
       mat = sqrtd * exp(2i * pi * (n' * n) / d);
+      if obj.adjoint_, mat = mat'; end
     end
-    
+
     % label for draw and tex function
     function [label] = label(obj, parameter, tex )
       label = 'H';
+      if obj.adjoint_, label = 'H'''; end
     end
-    
-  end
-  
-  methods
+
     % toQASM
     function [out] = toQASM(obj, fid, offset)
       if nargin == 2, offset = 0; end
@@ -72,8 +78,15 @@ classdef Hadamard < qclab.qgates.QGate1
     end
     
     % equals
-    function [bool] = equals(~,other)
-      bool = isa(other, 'qclab.qgates.Hadamard');
+    function [bool] = equals(obj,other)
+      bool = isa(other, 'qclab.qgates.Hadamard') && ...
+        obj.adjoint_ == other.adjoint_;
+    end
+
+    % ctranspose: for d > 2 the Fourier gate is not self-adjoint
+    function objprime = ctranspose( obj )
+      objprime = copy( obj );
+      objprime.adjoint_ = ~obj.adjoint_;
     end
   end
 

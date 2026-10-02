@@ -96,6 +96,16 @@ classdef MVCG < qclab.qgates.QGate2
       end
     end
 
+    % ctranspose: block diagonal, so each branch gate is replaced by its adjoint
+    function objprime = ctranspose( obj )
+      objprime = copy( obj );
+      gates = obj.gates_;
+      for i = 1:length(gates)
+        gates(i) = obj.gates_(i)';
+      end
+      objprime.gates_ = gates;
+    end
+
     function [out] = toQASM(obj, fid, offset)
       assert(false, 'Unsupported');
     end

@@ -42,6 +42,12 @@ classdef SubspaceGate < qclab.qgates.QGate1
         obj.gate_.equals(other.gate_); % Same gate
     end
 
+    % ctranspose: same subspace, adjoint of the child gate
+    function objprime = ctranspose( obj )
+      objprime = copy( obj );
+      objprime.gate_ = obj.gate_';
+    end
+
     function [out] = toQASM(obj, fid, offset)
       assert(false, 'Unsupported');
     end

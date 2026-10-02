@@ -7,13 +7,13 @@ classdef test_qclab_qgates_qudit_INC < matlab.unittest.TestCase
     function test_INC_sumval1_is_shift_operator(test)
       d = 5;
       inc = qclab.qgates.qudit.INC( 0, 1 );
-      test.verifyEqual( full(inc.matrix(d)), qclab.qgates.PauliX.matrix(d) );
+      test.verifyEqual( full(inc.matrix(d)), qclab.qgates.PauliX().matrix(d) );
     end
 
     % General sumval realizes X_d^sumval.
     function test_INC_general_sumval(test)
       d = 5;
-      X = qclab.qgates.PauliX.matrix(d);
+      X = qclab.qgates.PauliX().matrix(d);
       for s = 0:d-1
         inc = qclab.qgates.qudit.INC( 0, s );
         test.verifyEqual( full(inc.matrix(d)), X^s );
@@ -25,7 +25,7 @@ classdef test_qclab_qgates_qudit_INC < matlab.unittest.TestCase
       inc = qclab.qgates.qudit.INC();
       test.verifyEqual( inc.qubit, int64(0) );
       test.verifyFalse( inc.fixed );
-      test.verifyEqual( full(inc.matrix(5)), qclab.qgates.PauliX.matrix(5) );
+      test.verifyEqual( full(inc.matrix(5)), qclab.qgates.PauliX().matrix(5) );
     end
 
     % update() changes sumval when the gate is adjustable, and is
@@ -33,7 +33,7 @@ classdef test_qclab_qgates_qudit_INC < matlab.unittest.TestCase
     function test_update_and_fixed(test)
       inc = qclab.qgates.qudit.INC( 0, 1, false );
       inc.update( 3 );
-      test.verifyEqual( full(inc.matrix(5)), qclab.qgates.PauliX.matrix(5)^3 );
+      test.verifyEqual( full(inc.matrix(5)), qclab.qgates.PauliX().matrix(5)^3 );
 
       incFixed = qclab.qgates.qudit.INC( 0, 1, true );
       test.verifyTrue( incFixed.fixed );

@@ -62,6 +62,12 @@ classdef MControlledGate < qclab.qgates.QMultiControlledGate
     function [gate] = gate(obj)
       gate = copy(obj.gate_);
     end
+
+    % ctranspose: same controls, adjoint of the controlled gate
+    function objprime = ctranspose( obj )
+      objprime = ctranspose@qclab.qgates.QMultiControlledGate( obj );
+      objprime.gate_ = obj.gate_';
+    end
     
     % label for draw and tex function
     function [label] = label(obj, parameter, tex )

@@ -6,6 +6,8 @@ classdef SUM < qclab.qgates.QGate2
     control_    int64
     %> Target qudit
     target_     int64
+    %> true for the adjoint |c,t> -> |c,t-c>
+    adjoint_(1,1) logical = false
   end
 
   methods
@@ -24,7 +26,8 @@ classdef SUM < qclab.qgates.QGate2
       if nargin <= 1, d = 2; end
       isSparse = qclab.isSparse(obj.nbQubits, d);
       Id = eye(d);
-      blocks = arrayfun(@(k) circshift(Id, k), 0:d-1, 'UniformOutput', false);
+      sgn = 1 - 2 * obj.adjoint_;
+      blocks = arrayfun(@(k) circshift(Id, sgn * k), 0:d-1, 'UniformOutput', false);
       if obj.control_ < obj.target_
         mat = blkdiag(blocks{:});
       else
@@ -62,8 +65,9 @@ classdef SUM < qclab.qgates.QGate2
       s = qubits(2) - qubits(1) + 1;
       Imid = qclab.qId(s-2, isSparse, d);
       mats = zeros(d^s, d^s);
+      sgn = 1 - 2 * obj.adjoint_;
       for k = 0:d-1
-        block = circshift(Id, k);
+        block = circshift(Id, sgn * k);
         if strcmp(op, 'T') % transpose
           block = block.';
         elseif ~strcmp(op, 'N') % conjugate transpose
@@ -115,7 +119,14 @@ classdef SUM < qclab.qgates.QGate2
 
     function [bool] = equals(obj, other)
       bool = isa(other, 'qclab.qgates.qudit.SUM') && ...
-        (sign(obj.control_ - obj.target_) == sign(other.control_ - other.target_));
+        (sign(obj.control_ - obj.target_) == sign(other.control_ - other.target_)) && ...
+        obj.adjoint_ == other.adjoint_;
+    end
+
+    % ctranspose: the inverse sum |c,t> -> |c,t-c>
+    function objprime = ctranspose( obj )
+      objprime = copy( obj );
+      objprime.adjoint_ = ~obj.adjoint_;
     end
 
     function [out] = toQASM(obj, fid, offset)
@@ -128,6 +139,7 @@ classdef SUM < qclab.qgates.QGate2
 
     function [label] = label(obj, parameter, tex )
       label = char(8853); % oplus symbol
+      if obj.adjoint_, label = char(8854); end % ominus symbol
     end
 
   end

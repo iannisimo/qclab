@@ -37,7 +37,7 @@ classdef test_qclab_qgates_qudit_SubspaceGate < matlab.unittest.TestCase
       d = 3;
       H = qclab.qgates.Hadamard();
       G = qclab.qgates.qudit.SubspaceGate( H, [0, 1, 2], 0 );
-      test.verifyEqual( G.matrix(d), qclab.qgates.Hadamard.matrix(d), 'AbsTol', 10*eps );
+      test.verifyEqual( G.matrix(d), qclab.qgates.Hadamard().matrix(d), 'AbsTol', 10*eps );
     end
 
     % nbQubits / qubit bookkeeping of the wrapper mirror the wrapped gate.

@@ -37,15 +37,22 @@
 % (C) Copyright Daan Camps and Roel Van Beeumen 2021.  
 % ==============================================================================
 classdef PauliX < qclab.qgates.QGate1
+  properties (Access = protected)
+    %> true if this gate is the adjoint (differs from the gate for d > 2)
+    adjoint_(1,1) logical = false
+  end
+
   methods (Static)
     % fixed
     function [bool] = fixed
       bool = true;
     end
-    
+  end
+  
+  methods
     % matrix
-    function [mat] = matrix(d)
-      if(nargin < 1)
+    function [mat] = matrix(obj, d)
+      if nargin < 2
         d = 2;
       end
       if d == 2
@@ -53,16 +60,15 @@ classdef PauliX < qclab.qgates.QGate1
         return
       end
       mat = circshift(eye(d), 1, 1);
+      if obj.adjoint_, mat = mat'; end
     end
     
     % label for draw and tex function
     function [label] = label(obj, parameter, tex )
       label = 'X';
+      if obj.adjoint_, label = 'X'''; end
     end
-    
-  end
-  
-  methods
+
     % toQASM
     function [out] = toQASM(obj, fid, offset)
       if nargin == 2, offset = 0; end
@@ -71,8 +77,15 @@ classdef PauliX < qclab.qgates.QGate1
     end
     
     % equals
-    function [bool] = equals(~,other)
-      bool = isa(other, 'qclab.qgates.PauliX');
+    function [bool] = equals(obj,other)
+      bool = isa(other, 'qclab.qgates.PauliX') && ...
+        obj.adjoint_ == other.adjoint_;
+    end
+
+    % ctranspose: for d > 2 the gate is not self-adjoint
+    function objprime = ctranspose( obj )
+      objprime = copy( obj );
+      objprime.adjoint_ = ~obj.adjoint_;
     end
   end
 

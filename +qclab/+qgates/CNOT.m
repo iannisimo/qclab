@@ -103,8 +103,9 @@ classdef CNOT < qclab.qgates.QControlledGate2
       bool = false;
       if isa(other,'qclab.qgates.CNOT') && ...
           (obj.controlState == other.controlState)
-        bool = ((obj.control < obj.target) && (other.control < other.target))...
-          || ((obj.control > obj.target) && (other.control > other.target)) ;
+        bool = (((obj.control < obj.target) && (other.control < other.target))...
+          || ((obj.control > obj.target) && (other.control > other.target))) && ...
+          obj.gate_.equals(other.gate_) ;
       end
     end
     
@@ -116,6 +117,12 @@ classdef CNOT < qclab.qgates.QControlledGate2
     %> Copy of 1-qubit gate of controlled-NOT gate
     function [gate] = gate(obj)
       gate = copy(obj.gate_);
+    end
+
+    % ctranspose: the controlled Pauli is not self-adjoint for d > 2
+    function objprime = ctranspose( obj )
+      objprime = ctranspose@qclab.qgates.QControlledGate2( obj );
+      objprime.gate_ = obj.gate_';
     end
     
       

@@ -10,8 +10,8 @@ classdef test_qclab_QCircuit_qudit < matlab.unittest.TestCase
       circuit = qclab.QCircuit( 2 );
       circuit.push_back( qclab.qgates.PauliX(0) );
       circuit.push_back( qclab.qgates.Hadamard(1) );
-      expected = kron( qclab.qgates.PauliX.matrix(2), ...
-                        qclab.qgates.Hadamard.matrix(2) );
+      expected = kron( qclab.qgates.PauliX().matrix(2), ...
+                        qclab.qgates.Hadamard().matrix(2) );
       test.verifyEqual( circuit.matrix, expected, 'AbsTol', 10*eps );
     end
 
@@ -28,8 +28,8 @@ classdef test_qclab_QCircuit_qudit < matlab.unittest.TestCase
       test.verifySize( mat, [d^2, d^2] );
       test.verifyEqual( mat'*mat, eye(d^2), 'AbsTol', 10*eps );
 
-      expected = kron( qclab.qgates.PauliX.matrix(d), ...
-                        qclab.qgates.Hadamard.matrix(d) );
+      expected = kron( qclab.qgates.PauliX().matrix(d), ...
+                        qclab.qgates.Hadamard().matrix(d) );
       test.verifyEqual( mat, expected, 'AbsTol', 10*eps );
     end
 
@@ -56,7 +56,7 @@ classdef test_qclab_QCircuit_qudit < matlab.unittest.TestCase
       circuit = qclab.QCircuit( 1, 0, 4 );
       test.verifyTrue( circuit.canInsert( x ) );
       circuit.push_back( x );  % must not throw
-      test.verifyEqual( circuit.matrix, qclab.qgates.PauliX.matrix(4) );
+      test.verifyEqual( circuit.matrix, qclab.qgates.PauliX().matrix(4) );
     end
 
     % The new qudit-native gate classes (SubspaceGate, INC, MVCG) must

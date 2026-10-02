@@ -12,8 +12,8 @@ classdef test_qclab_qgates_qudit_MVCG < matlab.unittest.TestCase
 
       mat = G.matrix(d);
       expected = blkdiag( qclab.qgates.Identity.matrix(d), ...
-                           qclab.qgates.PauliX.matrix(d), ...
-                           qclab.qgates.PauliZ.matrix(d) );
+                           qclab.qgates.PauliX().matrix(d), ...
+                           qclab.qgates.PauliZ().matrix(d) );
       test.verifyEqual( mat, expected );
       test.verifyEqual( mat'*mat, eye(d^2), 'AbsTol', 10*eps );
     end

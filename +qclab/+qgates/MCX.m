@@ -72,7 +72,8 @@ classdef MCX < qclab.qgates.QMultiControlledGate
         bool = (sum(obj.controls < obj.targets) == ...
                 sum(other.controls < other.targets)) && ...
                (sum(obj.controls > obj.targets) == ...
-                sum(other.controls > other.targets)) ;
+                sum(other.controls > other.targets)) && ...
+               obj.gate_.equals(other.gate_) ;
       end
     end
     
@@ -92,6 +93,12 @@ classdef MCX < qclab.qgates.QMultiControlledGate
     %> Copy of 1-qubit gate of multi-controlled-NOT gate
     function [gate] = gate(obj)
       gate = copy(obj.gate_);
+    end
+
+    % ctranspose: the controlled Pauli is not self-adjoint for d > 2
+    function objprime = ctranspose( obj )
+      objprime = ctranspose@qclab.qgates.QMultiControlledGate( obj );
+      objprime.gate_ = obj.gate_';
     end
     
     % setQubits

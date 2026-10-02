@@ -130,6 +130,12 @@ classdef GCG < qclab.qgates.QGate2
         obj.gate_.equals(other.gate_);
     end
 
+    % ctranspose: branch k of the adjoint applies (G^k)' = (G')^k
+    function objprime = ctranspose( obj )
+      objprime = copy( obj );
+      objprime.gate_ = obj.gate_';
+    end
+
     function [out] = toQASM(obj, fid, offset)
       assert(false, 'Unsupported');
     end

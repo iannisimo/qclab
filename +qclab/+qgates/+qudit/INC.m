@@ -30,6 +30,12 @@ classdef INC < qclab.qgates.QGate1 & qclab.QAdjustable
       bool = isa(other, 'qclab.qgates.qudit.INC') && (obj.sumval_ == other.sumval_);
     end
 
+    % ctranspose: the inverse increment, x -> x - sumval mod d
+    function objprime = ctranspose( obj )
+      objprime = copy( obj );
+      objprime.sumval_ = -obj.sumval_;
+    end
+
     function [out] = toQASM(obj, fid, offset)
       assert(false, 'Unsupported');
     end

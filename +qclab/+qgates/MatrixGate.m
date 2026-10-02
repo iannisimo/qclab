@@ -182,8 +182,8 @@ classdef MatrixGate < qclab.QObject
     % equals
     function [bool] = equals(obj, other)
       if isa(other, 'qclab.qgates.MatrixGate')
-        bool = (all(obj.qubits == other.qubits)) && norm(obj.matrix - ...
-          other.matrix, 'fro') < 10*eps;
+        bool = (all(obj.qubits == other.qubits)) && obj.d_ == other.d_ && ...
+          norm(obj.matrix(obj.d_) - other.matrix(other.d_), 'fro') < 10*eps;
       else
         bool = false;
       end

@@ -76,28 +76,27 @@ for term = seq
   [c, cv, t, V] = singleClubHouseholder(term, psi_, d);
   VGate = qclab.qgates.MatrixGate(t-1, V);
   if c == -1
-    fVGate = VGate;
-    bVGate = VGate.ctranspose();
     onedgates = onedgates + 1;
   else
-    fVGate = qclab.qgates.ControlledGate(VGate, c-1, t-1, str2double(cv));
-    bVGate = qclab.qgates.ControlledGate(VGate.ctranspose(), c-1, t-1, str2double(cv));
+    VGate = qclab.qgates.ControlledGate(VGate, c-1, t-1, str2double(cv));
     twodgates = twodgates + 1;
   end
-  mat = fVGate.apply('R', 'N', n, eye(length(psi_)), 0, d)
-  psi_ = fVGate.apply('R', 'N', n, psi_, 0, d);
+  mat = VGate.apply('R', 'N', n, eye(length(psi_)), 0, d)
+  psi_ = VGate.apply('R', 'N', n, psi_, 0, d);
   psi_(abs(psi_) < 1e-6) = 0
-  cir.push_back(bVGate);
+  cir.push_back(VGate);
 end
 
+% the reduced state is e^{i theta}|0>: the last reduction step removes the phase
 PsiPhase = psi_(1,1);
 
-phase = qclab.qgates.Phase(n-1, real(PsiPhase), imag(PsiPhase));
+phase = qclab.qgates.Phase(n-1, real(PsiPhase), -imag(PsiPhase));
 dPhase = qclab.qgates.qudit.SubspaceGate(phase, [1, 0], n-1);
 
 cir.push_back(dPhase);
 toc
 
+% cir is the reduction circuit (psi -> |0>), so its adjoint prepares psi
 % res = cir.ctranspose().simulate(repmat('0', 1, n)).states;
 
 

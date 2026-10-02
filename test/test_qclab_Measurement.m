@@ -30,10 +30,10 @@ classdef test_qclab_Measurement < matlab.unittest.TestCase
       M = qclab.Measurement(2, 'x');
       test.verifyEqual(M.qubit, int64(2));
       test.verifyEqual(M.basisChange, qclab.qgates.Hadamard);
-      test.verifyEqual(M.matrix, qclab.qgates.Hadamard.matrix);
+      test.verifyEqual(M.matrix, qclab.qgates.Hadamard().matrix);
       M = qclab.Measurement(2, [qclab.qgates.Hadamard, qclab.qgates.PauliX]);
       test.verifyEqual(M.matrix, ...
-                       qclab.qgates.Hadamard.matrix*qclab.qgates.PauliX.matrix);
+                       qclab.qgates.Hadamard().matrix*qclab.qgates.PauliX().matrix);
       % draw gate
       [out] = M.draw(1, 'N');
       test.verifyEqual( out, 0 );
@@ -64,7 +64,7 @@ classdef test_qclab_Measurement < matlab.unittest.TestCase
       M1 = ctranspose(M);
       test.verifyEqual( M1.qubit, int64(1) );
       test.verifyTrue( equals(M1.basisChange(1), [qclab.qgates.Phase(0,-pi/2)])) ;
-      test.verifyTrue( equals(M1.basisChange(2), [qclab.qgates.Hadamard])) ;
+      test.verifyTrue( equals(M1.basisChange(2), [qclab.qgates.Hadamard'])) ;
       test.verifyTrue(strcmp(M1.label, 'test'));
     end
 

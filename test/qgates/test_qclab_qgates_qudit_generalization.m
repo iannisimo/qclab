@@ -13,19 +13,19 @@ classdef test_qclab_qgates_qudit_generalization < matlab.unittest.TestCase
       test.verifyEqual( qclab.qgates.Identity.matrix(2), eye(2) );
       test.verifyEqual( qclab.qgates.Identity.matrix,    eye(2) );
 
-      test.verifyEqual( qclab.qgates.PauliX.matrix(2), [0 1; 1 0] );
-      test.verifyEqual( qclab.qgates.PauliX.matrix,    [0 1; 1 0] );
+      test.verifyEqual( qclab.qgates.PauliX().matrix(2), [0 1; 1 0] );
+      test.verifyEqual( qclab.qgates.PauliX().matrix,    [0 1; 1 0] );
 
-      test.verifyEqual( qclab.qgates.PauliY.matrix(2), [0 -1i; 1i 0] );
-      test.verifyEqual( qclab.qgates.PauliY.matrix,    [0 -1i; 1i 0] );
+      test.verifyEqual( qclab.qgates.PauliY().matrix(2), [0 -1i; 1i 0] );
+      test.verifyEqual( qclab.qgates.PauliY().matrix,    [0 -1i; 1i 0] );
 
-      test.verifyEqual( qclab.qgates.PauliZ.matrix(2), [1 0; 0 -1] );
-      test.verifyEqual( qclab.qgates.PauliZ.matrix,    [1 0; 0 -1] );
+      test.verifyEqual( qclab.qgates.PauliZ().matrix(2), [1 0; 0 -1] );
+      test.verifyEqual( qclab.qgates.PauliZ().matrix,    [1 0; 0 -1] );
 
       sqrt2 = 1/sqrt(2);
       Href = [sqrt2, sqrt2; sqrt2, -sqrt2];
-      test.verifyEqual( qclab.qgates.Hadamard.matrix(2), Href, 'AbsTol', eps );
-      test.verifyEqual( qclab.qgates.Hadamard.matrix,    Href, 'AbsTol', eps );
+      test.verifyEqual( qclab.qgates.Hadamard().matrix(2), Href, 'AbsTol', eps );
+      test.verifyEqual( qclab.qgates.Hadamard().matrix,    Href, 'AbsTol', eps );
 
       P = qclab.qgates.Phase(0, pi/3);
       test.verifyEqual( P.matrix(2), [1, 0; 0, exp(1i*pi/3)], 'AbsTol', eps );
@@ -36,10 +36,10 @@ classdef test_qclab_qgates_qudit_generalization < matlab.unittest.TestCase
     function test_unitary_for_d_greater_than_2(test)
       for d = [3, 4, 5, 7]
         test.verifyUnitary_( qclab.qgates.Identity.matrix(d), d );
-        test.verifyUnitary_( qclab.qgates.PauliX.matrix(d), d );
-        test.verifyUnitary_( qclab.qgates.PauliY.matrix(d), d );
-        test.verifyUnitary_( qclab.qgates.PauliZ.matrix(d), d );
-        test.verifyUnitary_( qclab.qgates.Hadamard.matrix(d), d );
+        test.verifyUnitary_( qclab.qgates.PauliX().matrix(d), d );
+        test.verifyUnitary_( qclab.qgates.PauliY().matrix(d), d );
+        test.verifyUnitary_( qclab.qgates.PauliZ().matrix(d), d );
+        test.verifyUnitary_( qclab.qgates.Hadamard().matrix(d), d );
         P = qclab.qgates.Phase(0, 0.7);
         test.verifyUnitary_( P.matrix(d), d );
       end
@@ -48,7 +48,7 @@ classdef test_qclab_qgates_qudit_generalization < matlab.unittest.TestCase
     % PauliX generalizes to the cyclic shift operator |k> -> |k+1 mod d>.
     function test_PauliX_is_shift_operator(test)
       d = 5;
-      X = qclab.qgates.PauliX.matrix(d);
+      X = qclab.qgates.PauliX().matrix(d);
       test.verifyEqual( X, circshift(eye(d), 1, 1) );
       % acting on basis vector e_k gives e_{k+1 mod d}
       for k = 0:d-1
@@ -61,7 +61,7 @@ classdef test_qclab_qgates_qudit_generalization < matlab.unittest.TestCase
     % PauliZ generalizes to the clock operator diag(exp(2pi i k / d)).
     function test_PauliZ_is_clock_operator(test)
       d = 5;
-      Z = qclab.qgates.PauliZ.matrix(d);
+      Z = qclab.qgates.PauliZ().matrix(d);
       k = (0:d-1)';
       test.verifyEqual( Z, diag(exp(2i*pi*k/d)), 'AbsTol', eps );
     end
@@ -70,9 +70,9 @@ classdef test_qclab_qgates_qudit_generalization < matlab.unittest.TestCase
     % (Weyl-Heisenberg) generalization.
     function test_PauliY_consistent_with_X_and_Z(test)
       for d = [3, 4, 5]
-        X = qclab.qgates.PauliX.matrix(d);
-        Z = qclab.qgates.PauliZ.matrix(d);
-        Y = qclab.qgates.PauliY.matrix(d);
+        X = qclab.qgates.PauliX().matrix(d);
+        Z = qclab.qgates.PauliZ().matrix(d);
+        Y = qclab.qgates.PauliY().matrix(d);
         test.verifyEqual( Y, 1i * X * Z, 'AbsTol', 10*eps );
       end
     end
@@ -81,7 +81,7 @@ classdef test_qclab_qgates_qudit_generalization < matlab.unittest.TestCase
     % transform F_d = exp(2*pi*i*n'*n/d)/sqrt(d).
     function test_Hadamard_is_discrete_fourier_transform(test)
       for d = [3, 4, 5]
-        H = qclab.qgates.Hadamard.matrix(d);
+        H = qclab.qgates.Hadamard().matrix(d);
         n = (0:d-1)';
         Fd = exp(2i*pi*(n*n')/d) / sqrt(d);
         test.verifyEqual( H, Fd, 'AbsTol', 10*eps );
