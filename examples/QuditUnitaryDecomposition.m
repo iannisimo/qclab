@@ -11,8 +11,9 @@ U = randn(d^n) + IMAG * 1i * randn(d^n);
 function [W] = makeHouseholder(phi)
   zero = zeros(size(phi));
   zero(1,1) = 1;
-  eta = phi - sqrt(phi'*phi) * (zero'*phi / abs(zero'*phi)) * zero;
-  W = eye(length(phi)) - (2 / (eta'*eta)) * (eta * eta');
+  % + instead of -: no cancellation in eta(1); negated to keep W phi = sgn ||phi|| e1
+  eta = phi + sqrt(phi'*phi) * (zero'*phi / abs(zero'*phi)) * zero;
+  W = -(eye(length(phi)) - (2 / (eta'*eta)) * (eta * eta'));
 end
 
 function seq = makeClubSequence(d, n)
